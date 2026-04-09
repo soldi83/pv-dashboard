@@ -7,7 +7,7 @@ Vite/React-Projekt mit festen Stammdaten und **monatlicher JSON-Datenpflege**.
 Die Monatswerte liegen hier:
 
 ```text
-src/data/monthlyData.json
+(https://github.com/soldi83/pv-dashboard-data)
 ```
 
 Pro Monat pflegst du nur diese Felder:
