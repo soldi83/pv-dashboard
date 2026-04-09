@@ -8,6 +8,7 @@ const currency = new Intl.NumberFormat('de-CH', { style: 'currency', currency: '
 const number = new Intl.NumberFormat('de-CH', { maximumFractionDigits: 2 });
 const percent = new Intl.NumberFormat('de-CH', { style: 'percent', maximumFractionDigits: 1 });
 const COLORS = { solar: '#f59e0b', ownUse: '#10b981', grid: '#3b82f6', export: '#8b5cf6', money: '#ef4444' };
+const MONTH_LABELS = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
 const toNumber = (value) => (typeof value === 'number' && Number.isFinite(value) ? value : 0);
 
 function Card({ children, className = '' }) {
@@ -95,6 +96,18 @@ function buildYearlyData(rows) {
     });
 }
 
+function getHeatColor(value, maxValue) {
+  if (!value || value <= 0 || !maxValue) return '#fff7ed';
+  const ratio = Math.min(value / maxValue, 1);
+  const lightness = 96 - ratio * 42;
+  return `hsl(36 100% ${lightness}%)`;
+}
+
+function getHeatTextColor(value, maxValue) {
+  if (!value || value <= 0 || !maxValue) return '#94a3b8';
+  return value / maxValue > 0.58 ? '#7c2d12' : '#9a3412';
+}
+
 export default function App() {
   const yearlyData = useMemo(() => buildYearlyData(monthlyData), []);
 
@@ -152,9 +165,24 @@ export default function App() {
       year: String(row.year),
       'Netto-Ersparnis': row.annualBenefit,
       Kumuliert: cumulative,
-      OffeneInvestition: Math.max(meta.netInvestment - cumulative, 0),
     };
   });
+
+  const maxMonthlyProduction = useMemo(() => monthlyData.reduce((max, row) => Math.max(max, toNumber(row.productionKwh)), 0), []);
+
+  const monthlyProductionRows = useMemo(() => {
+    const grouped = new Map();
+    monthlyData.forEach((row) => {
+      const year = row.month.slice(0, 4);
+      const monthIndex = Number(row.month.slice(5, 7)) - 1;
+      if (!grouped.has(year)) {
+        grouped.set(year, { year, months: Array.from({ length: 12 }, (_, idx) => ({ label: MONTH_LABELS[idx], value: null, hasValue: false })) });
+      }
+      const value = typeof row.productionKwh === 'number' ? row.productionKwh : null;
+      grouped.get(year).months[monthIndex] = { label: MONTH_LABELS[monthIndex], value, hasValue: value !== null && value > 0 };
+    });
+    return Array.from(grouped.values()).sort((a, b) => Number(a.year) - Number(b.year));
+  }, []);
 
   return (
     <div className="app-shell">
@@ -238,6 +266,36 @@ export default function App() {
           </div>
         </Card>
       </div>
+
+      <Card className="heatmap-card">
+        <div className="section-head"><div><h2>PV Produktion pro Monat</h2></div></div>
+        <div className="heatmap-wrap">
+          <table className="heatmap-table">
+            <thead>
+              <tr>
+                <th>Jahr</th>
+                {MONTH_LABELS.map((month) => <th key={month}>{month}</th>)}
+              </tr>
+            </thead>
+            <tbody>
+              {monthlyProductionRows.map((row) => (
+                <tr key={row.year}>
+                  <td className="heatmap-year">{row.year}</td>
+                  {row.months.map((month) => (
+                    <td
+                      key={`${row.year}-${month.label}`}
+                      className={`heatmap-cell ${month.hasValue ? 'heatmap-cell-filled' : 'heatmap-cell-empty'}`}
+                      style={{ backgroundColor: getHeatColor(month.value, maxMonthlyProduction), color: getHeatTextColor(month.value, maxMonthlyProduction) }}
+                    >
+                      {month.value != null && month.value > 0 ? number.format(month.value) : '–'}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Card>
 
       <Card className="footer-card">
         <div className="table-wrap">
