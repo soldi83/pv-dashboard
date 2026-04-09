@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, BarChart, Bar, AreaChart, Area } from 'recharts';
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, BarChart, Bar, ComposedChart } from 'recharts';
 import { Coins, Gauge, Home, PiggyBank, Sun, Zap } from 'lucide-react';
 import meta from './data/meta.json';
 import monthlyData from './data/monthlyData.json';
@@ -150,6 +150,7 @@ export default function App() {
     cumulative += row.annualBenefit;
     return {
       year: String(row.year),
+      'Netto-Ersparnis': row.annualBenefit,
       Kumuliert: cumulative,
       OffeneInvestition: Math.max(meta.netInvestment - cumulative, 0),
     };
@@ -202,24 +203,18 @@ export default function App() {
         </Card>
 
         <Card className="chart-card span-2">
-          <div className="section-head"><div><h2>Kumulierte Netto-Ersparnis</h2></div></div>
+          <div className="section-head"><div><h2>Netto-Ersparnis</h2></div></div>
           <div className="chart-wrap large">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={cumulativeSeries}>
-                <defs>
-                  <linearGradient id="cumFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={COLORS.ownUse} stopOpacity={0.45} />
-                    <stop offset="95%" stopColor={COLORS.ownUse} stopOpacity={0.04} />
-                  </linearGradient>
-                </defs>
+              <ComposedChart data={cumulativeSeries}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                 <XAxis dataKey="year" stroke="#64748b" />
                 <YAxis stroke="#64748b" />
                 <Tooltip content={<TooltipValue suffix=" CHF" />} />
                 <Legend />
-                <Area type="monotone" dataKey="Kumuliert" stroke={COLORS.ownUse} fill="url(#cumFill)" strokeWidth={3} />
-                <Line type="monotone" dataKey="OffeneInvestition" stroke={COLORS.money} strokeWidth={3} dot={false} />
-              </AreaChart>
+                <Bar dataKey="Netto-Ersparnis" fill={COLORS.solar} radius={[8, 8, 0, 0]} />
+                <Line type="monotone" dataKey="Kumuliert" stroke={COLORS.ownUse} strokeWidth={3} dot={{ r: 4 }} />
+              </ComposedChart>
             </ResponsiveContainer>
           </div>
         </Card>
@@ -264,8 +259,8 @@ export default function App() {
             </thead>
             <tbody>
               {yearlyData.map((row) => (
-                <tr key={row.year}>
-                  <td>{row.year}</td>
+                <tr key={row.year} className={row.monthsWithValues === 0 ? 'empty-row' : ''}>
+                  <td className="col-year">{row.year}</td>
                   <td>{number.format(row.productionKwh)} kWh</td>
                   <td>{number.format(row.pvConsumptionKwh)} kWh</td>
                   <td>{number.format(row.selfConsumedKwh)} kWh</td>
@@ -275,7 +270,7 @@ export default function App() {
                   <td>{row.selfConsumptionRate == null ? '–' : percent.format(row.selfConsumptionRate)}</td>
                   <td>{row.ownUseSavings > 0 ? currency.format(row.ownUseSavings) : '–'}</td>
                   <td>{row.feedInRevenue > 0 ? currency.format(row.feedInRevenue) : '–'}</td>
-                  <td>{row.annualBenefit > 0 ? currency.format(row.annualBenefit) : '–'}</td>
+                  <td className="col-total">{row.annualBenefit > 0 ? currency.format(row.annualBenefit) : '–'}</td>
                 </tr>
               ))}
             </tbody>
