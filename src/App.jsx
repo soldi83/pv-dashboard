@@ -1,8 +1,8 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, BarChart, Bar, ComposedChart } from 'recharts';
 import { Coins, Gauge, Home, PiggyBank, Sun, Zap } from 'lucide-react';
 import meta from './data/meta.json';
-import monthlyData from './data/monthlyData.json';
+import { loadMonthlyData } from './loadMonthlyData';
 
 const currency = new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 });
 const number = new Intl.NumberFormat('de-CH', { maximumFractionDigits: 2 });
@@ -44,8 +44,10 @@ function TooltipValue({ active, payload, label, suffix = '' }) {
 
 function buildYearlyData(rows) {
   const grouped = new Map();
+
   rows.forEach((row) => {
     const year = Number(row.month.slice(0, 4));
+
     if (!grouped.has(year)) {
       grouped.set(year, {
         year,
@@ -59,6 +61,7 @@ function buildYearlyData(rows) {
         feedInRevenue: 0,
       });
     }
+
     const target = grouped.get(year);
     target.monthsConfigured += 1;
 
@@ -85,6 +88,7 @@ function buildYearlyData(rows) {
     .map((item) => {
       const pvConsumptionKwh = item.productionKwh - item.exportedKwh;
       const consumptionKwh = item.selfConsumedKwh + item.gridPurchaseKwh;
+
       return {
         ...item,
         pvConsumptionKwh,
@@ -109,7 +113,18 @@ function getHeatTextColor(value, maxValue) {
 }
 
 export default function App() {
-  const yearlyData = useMemo(() => buildYearlyData(monthlyData), []);
+  const [monthlyData, setMonthlyData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    loadMonthlyData()
+      .then((data) => setMonthlyData(Array.isArray(data) ? data : []))
+      .catch((err) => setError(err.message || 'Unbekannter Fehler'))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const yearlyData = useMemo(() => buildYearlyData(monthlyData), [monthlyData]);
 
   const totals = useMemo(() => {
     const base = yearlyData.reduce(
@@ -125,7 +140,9 @@ export default function App() {
       },
       { productionKwh: 0, selfConsumedKwh: 0, exportedKwh: 0, gridPurchaseKwh: 0, ownUseSavings: 0, feedInRevenue: 0, annualBenefit: 0 }
     );
+
     const consumptionKwh = base.selfConsumedKwh + base.gridPurchaseKwh;
+
     return {
       ...base,
       pvConsumptionKwh: base.productionKwh - base.exportedKwh,
@@ -137,9 +154,13 @@ export default function App() {
   }, [yearlyData]);
 
   const latestConfiguredMonth = useMemo(() => {
-    const withValues = monthlyData.filter((row) => [row.productionKwh, row.selfConsumedKwh, row.exportedKwh, row.gridPurchaseKwh].some((v) => typeof v === 'number' && v > 0));
+    const withValues = monthlyData.filter((row) =>
+      [row.productionKwh, row.selfConsumedKwh, row.exportedKwh, row.gridPurchaseKwh].some(
+        (v) => typeof v === 'number' && v > 0
+      )
+    );
     return withValues.length ? withValues[withValues.length - 1].month : '–';
-  }, []);
+  }, [monthlyData]);
 
   const kpis = [
     { label: 'Netto-Investition', value: currency.format(meta.netInvestment), icon: PiggyBank, color: 'rose' },
@@ -159,30 +180,59 @@ export default function App() {
   }));
 
   let cumulative = 0;
-  const cumulativeSeries = yearlyData.filter((row) => row.monthsWithValues > 0).map((row) => {
-    cumulative += row.annualBenefit;
-    return {
-      year: String(row.year),
-      'Netto-Ersparnis': row.annualBenefit,
-      Kumuliert: cumulative,
-    };
-  });
+  const cumulativeSeries = yearlyData
+    .filter((row) => row.monthsWithValues > 0)
+    .map((row) => {
+      cumulative += row.annualBenefit;
+      return {
+        year: String(row.year),
+        'Netto-Ersparnis': row.annualBenefit,
+        Kumuliert: cumulative,
+      };
+    });
 
-  const maxMonthlyProduction = useMemo(() => monthlyData.reduce((max, row) => Math.max(max, toNumber(row.productionKwh)), 0), []);
+  const maxMonthlyProduction = useMemo(
+    () => monthlyData.reduce((max, row) => Math.max(max, toNumber(row.productionKwh)), 0),
+    [monthlyData]
+  );
 
   const monthlyProductionRows = useMemo(() => {
     const grouped = new Map();
+
     monthlyData.forEach((row) => {
       const year = row.month.slice(0, 4);
       const monthIndex = Number(row.month.slice(5, 7)) - 1;
+
       if (!grouped.has(year)) {
-        grouped.set(year, { year, months: Array.from({ length: 12 }, (_, idx) => ({ label: MONTH_LABELS[idx], value: null, hasValue: false })) });
+        grouped.set(year, {
+          year,
+          months: Array.from({ length: 12 }, (_, idx) => ({
+            label: MONTH_LABELS[idx],
+            value: null,
+            hasValue: false,
+          })),
+        });
       }
+
       const value = typeof row.productionKwh === 'number' ? row.productionKwh : null;
-      grouped.get(year).months[monthIndex] = { label: MONTH_LABELS[monthIndex], value, hasValue: value !== null && value > 0 };
+
+      grouped.get(year).months[monthIndex] = {
+        label: MONTH_LABELS[monthIndex],
+        value,
+        hasValue: value !== null && value > 0,
+      };
     });
+
     return Array.from(grouped.values()).sort((a, b) => Number(a.year) - Number(b.year));
-  }, []);
+  }, [monthlyData]);
+
+  if (loading) {
+    return <div className="app-shell"><div className="hero"><h1>Lade Daten…</h1></div></div>;
+  }
+
+  if (error) {
+    return <div className="app-shell"><div className="hero"><h1>Fehler beim Laden</h1><div className="hero-note">{error}</div></div></div>;
+  }
 
   return (
     <div className="app-shell">
