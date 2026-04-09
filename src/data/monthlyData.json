@@ -2,7 +2,7 @@
   {
     "month": "2025-01",
     "productionKwh": null,
-    "directUseKwh": null,
+    "selfConsumedKwh": null,
     "exportedKwh": null,
     "gridPurchaseKwh": null,
     "electricityPrice": 0.32,
@@ -11,7 +11,7 @@
   {
     "month": "2025-02",
     "productionKwh": null,
-    "directUseKwh": null,
+    "selfConsumedKwh": null,
     "exportedKwh": null,
     "gridPurchaseKwh": null,
     "electricityPrice": 0.32,
@@ -20,7 +20,7 @@
   {
     "month": "2025-03",
     "productionKwh": null,
-    "directUseKwh": null,
+    "selfConsumedKwh": null,
     "exportedKwh": null,
     "gridPurchaseKwh": null,
     "electricityPrice": 0.32,
@@ -29,7 +29,7 @@
   {
     "month": "2025-04",
     "productionKwh": null,
-    "directUseKwh": null,
+    "selfConsumedKwh": null,
     "exportedKwh": null,
     "gridPurchaseKwh": null,
     "electricityPrice": 0.32,
@@ -38,7 +38,7 @@
   {
     "month": "2025-05",
     "productionKwh": null,
-    "directUseKwh": null,
+    "selfConsumedKwh": null,
     "exportedKwh": null,
     "gridPurchaseKwh": null,
     "electricityPrice": 0.32,
@@ -47,7 +47,7 @@
   {
     "month": "2025-06",
     "productionKwh": null,
-    "directUseKwh": null,
+    "selfConsumedKwh": null,
     "exportedKwh": null,
     "gridPurchaseKwh": null,
     "electricityPrice": 0.32,
@@ -56,7 +56,7 @@
   {
     "month": "2025-07",
     "productionKwh": 1785.24,
-    "directUseKwh": 206.07,
+    "selfConsumedKwh": 400.66,
     "exportedKwh": 1377.05,
     "gridPurchaseKwh": 59.52,
     "electricityPrice": 0.32,
@@ -65,7 +65,7 @@
   {
     "month": "2025-08",
     "productionKwh": 2440.1,
-    "directUseKwh": 247.52,
+    "selfConsumedKwh": 543.85,
     "exportedKwh": 1886.81,
     "gridPurchaseKwh": 8.75,
     "electricityPrice": 0.32,
@@ -74,7 +74,7 @@
   {
     "month": "2025-09",
     "productionKwh": 1546.48,
-    "directUseKwh": 153.97,
+    "selfConsumedKwh": 501.1,
     "exportedKwh": 1034.59,
     "gridPurchaseKwh": 16.37,
     "electricityPrice": 0.32,
@@ -83,7 +83,7 @@
   {
     "month": "2025-10",
     "productionKwh": 869.02,
-    "directUseKwh": 180.38,
+    "selfConsumedKwh": 582.43,
     "exportedKwh": 276.99,
     "gridPurchaseKwh": 140.1,
     "electricityPrice": 0.32,
@@ -92,7 +92,7 @@
   {
     "month": "2025-11",
     "productionKwh": 558.91,
-    "directUseKwh": 150.0,
+    "selfConsumedKwh": 456.16,
     "exportedKwh": 101.85,
     "gridPurchaseKwh": 519.38,
     "electricityPrice": 0.32,
@@ -101,7 +101,7 @@
   {
     "month": "2025-12",
     "productionKwh": 279.63,
-    "directUseKwh": 120.45,
+    "selfConsumedKwh": 266.91,
     "exportedKwh": 8.31,
     "gridPurchaseKwh": 876.03,
     "electricityPrice": 0.32,
@@ -110,7 +110,7 @@
   {
     "month": "2026-01",
     "productionKwh": 404.47,
-    "directUseKwh": 148.87,
+    "selfConsumedKwh": 376.21,
     "exportedKwh": 21.06,
     "gridPurchaseKwh": 803.79,
     "electricityPrice": 0.3165,
@@ -119,7 +119,7 @@
   {
     "month": "2026-02",
     "productionKwh": 708.2,
-    "directUseKwh": 180.87,
+    "selfConsumedKwh": 491.23,
     "exportedKwh": 202.09,
     "gridPurchaseKwh": 404.41,
     "electricityPrice": 0.3165,
@@ -128,7 +128,7 @@
   {
     "month": "2026-03",
     "productionKwh": 1606.08,
-    "directUseKwh": 225.8,
+    "selfConsumedKwh": 668.01,
     "exportedKwh": 919.11,
     "gridPurchaseKwh": 219.92,
     "electricityPrice": 0.3165,
@@ -137,7 +137,7 @@
   {
     "month": "2026-04",
     "productionKwh": null,
-    "directUseKwh": null,
+    "selfConsumedKwh": null,
     "exportedKwh": null,
     "gridPurchaseKwh": null,
     "electricityPrice": 0.3165,
@@ -146,7 +146,7 @@
   {
     "month": "2026-05",
     "productionKwh": null,
-    "directUseKwh": null,
+    "selfConsumedKwh": null,
     "exportedKwh": null,
     "gridPurchaseKwh": null,
     "electricityPrice": 0.3165,
@@ -155,7 +155,7 @@
   {
     "month": "2026-06",
     "productionKwh": null,
-    "directUseKwh": null,
+    "selfConsumedKwh": null,
     "exportedKwh": null,
     "gridPurchaseKwh": null,
     "electricityPrice": 0.3165,
@@ -164,7 +164,7 @@
   {
     "month": "2026-07",
     "productionKwh": null,
-    "directUseKwh": null,
+    "selfConsumedKwh": null,
     "exportedKwh": null,
     "gridPurchaseKwh": null,
     "electricityPrice": 0.3165,
@@ -173,7 +173,7 @@
   {
     "month": "2026-08",
     "productionKwh": null,
-    "directUseKwh": null,
+    "selfConsumedKwh": null,
     "exportedKwh": null,
     "gridPurchaseKwh": null,
     "electricityPrice": 0.3165,
@@ -182,7 +182,7 @@
   {
     "month": "2026-09",
     "productionKwh": null,
-    "directUseKwh": null,
+    "selfConsumedKwh": null,
     "exportedKwh": null,
     "gridPurchaseKwh": null,
     "electricityPrice": 0.3165,
@@ -191,7 +191,7 @@
   {
     "month": "2026-10",
     "productionKwh": null,
-    "directUseKwh": null,
+    "selfConsumedKwh": null,
     "exportedKwh": null,
     "gridPurchaseKwh": null,
     "electricityPrice": 0.3165,
@@ -200,7 +200,7 @@
   {
     "month": "2026-11",
     "productionKwh": null,
-    "directUseKwh": null,
+    "selfConsumedKwh": null,
     "exportedKwh": null,
     "gridPurchaseKwh": null,
     "electricityPrice": 0.3165,
@@ -209,7 +209,7 @@
   {
     "month": "2026-12",
     "productionKwh": null,
-    "directUseKwh": null,
+    "selfConsumedKwh": null,
     "exportedKwh": null,
     "gridPurchaseKwh": null,
     "electricityPrice": 0.3165,
@@ -218,7 +218,7 @@
   {
     "month": "2027-01",
     "productionKwh": null,
-    "directUseKwh": null,
+    "selfConsumedKwh": null,
     "exportedKwh": null,
     "gridPurchaseKwh": null,
     "electricityPrice": null,
@@ -227,7 +227,7 @@
   {
     "month": "2027-02",
     "productionKwh": null,
-    "directUseKwh": null,
+    "selfConsumedKwh": null,
     "exportedKwh": null,
     "gridPurchaseKwh": null,
     "electricityPrice": null,
@@ -236,7 +236,7 @@
   {
     "month": "2027-03",
     "productionKwh": null,
-    "directUseKwh": null,
+    "selfConsumedKwh": null,
     "exportedKwh": null,
     "gridPurchaseKwh": null,
     "electricityPrice": null,
@@ -245,7 +245,7 @@
   {
     "month": "2027-04",
     "productionKwh": null,
-    "directUseKwh": null,
+    "selfConsumedKwh": null,
     "exportedKwh": null,
     "gridPurchaseKwh": null,
     "electricityPrice": null,
@@ -254,7 +254,7 @@
   {
     "month": "2027-05",
     "productionKwh": null,
-    "directUseKwh": null,
+    "selfConsumedKwh": null,
     "exportedKwh": null,
     "gridPurchaseKwh": null,
     "electricityPrice": null,
@@ -263,7 +263,7 @@
   {
     "month": "2027-06",
     "productionKwh": null,
-    "directUseKwh": null,
+    "selfConsumedKwh": null,
     "exportedKwh": null,
     "gridPurchaseKwh": null,
     "electricityPrice": null,
@@ -272,7 +272,7 @@
   {
     "month": "2027-07",
     "productionKwh": null,
-    "directUseKwh": null,
+    "selfConsumedKwh": null,
     "exportedKwh": null,
     "gridPurchaseKwh": null,
     "electricityPrice": null,
@@ -281,7 +281,7 @@
   {
     "month": "2027-08",
     "productionKwh": null,
-    "directUseKwh": null,
+    "selfConsumedKwh": null,
     "exportedKwh": null,
     "gridPurchaseKwh": null,
     "electricityPrice": null,
@@ -290,7 +290,7 @@
   {
     "month": "2027-09",
     "productionKwh": null,
-    "directUseKwh": null,
+    "selfConsumedKwh": null,
     "exportedKwh": null,
     "gridPurchaseKwh": null,
     "electricityPrice": null,
@@ -299,7 +299,7 @@
   {
     "month": "2027-10",
     "productionKwh": null,
-    "directUseKwh": null,
+    "selfConsumedKwh": null,
     "exportedKwh": null,
     "gridPurchaseKwh": null,
     "electricityPrice": null,
@@ -308,7 +308,7 @@
   {
     "month": "2027-11",
     "productionKwh": null,
-    "directUseKwh": null,
+    "selfConsumedKwh": null,
     "exportedKwh": null,
     "gridPurchaseKwh": null,
     "electricityPrice": null,
@@ -317,7 +317,7 @@
   {
     "month": "2027-12",
     "productionKwh": null,
-    "directUseKwh": null,
+    "selfConsumedKwh": null,
     "exportedKwh": null,
     "gridPurchaseKwh": null,
     "electricityPrice": null,
@@ -326,7 +326,7 @@
   {
     "month": "2028-01",
     "productionKwh": null,
-    "directUseKwh": null,
+    "selfConsumedKwh": null,
     "exportedKwh": null,
     "gridPurchaseKwh": null,
     "electricityPrice": null,
@@ -335,7 +335,7 @@
   {
     "month": "2028-02",
     "productionKwh": null,
-    "directUseKwh": null,
+    "selfConsumedKwh": null,
     "exportedKwh": null,
     "gridPurchaseKwh": null,
     "electricityPrice": null,
@@ -344,7 +344,7 @@
   {
     "month": "2028-03",
     "productionKwh": null,
-    "directUseKwh": null,
+    "selfConsumedKwh": null,
     "exportedKwh": null,
     "gridPurchaseKwh": null,
     "electricityPrice": null,
@@ -353,7 +353,7 @@
   {
     "month": "2028-04",
     "productionKwh": null,
-    "directUseKwh": null,
+    "selfConsumedKwh": null,
     "exportedKwh": null,
     "gridPurchaseKwh": null,
     "electricityPrice": null,
@@ -362,7 +362,7 @@
   {
     "month": "2028-05",
     "productionKwh": null,
-    "directUseKwh": null,
+    "selfConsumedKwh": null,
     "exportedKwh": null,
     "gridPurchaseKwh": null,
     "electricityPrice": null,
@@ -371,7 +371,7 @@
   {
     "month": "2028-06",
     "productionKwh": null,
-    "directUseKwh": null,
+    "selfConsumedKwh": null,
     "exportedKwh": null,
     "gridPurchaseKwh": null,
     "electricityPrice": null,
@@ -380,7 +380,7 @@
   {
     "month": "2028-07",
     "productionKwh": null,
-    "directUseKwh": null,
+    "selfConsumedKwh": null,
     "exportedKwh": null,
     "gridPurchaseKwh": null,
     "electricityPrice": null,
@@ -389,7 +389,7 @@
   {
     "month": "2028-08",
     "productionKwh": null,
-    "directUseKwh": null,
+    "selfConsumedKwh": null,
     "exportedKwh": null,
     "gridPurchaseKwh": null,
     "electricityPrice": null,
@@ -398,7 +398,7 @@
   {
     "month": "2028-09",
     "productionKwh": null,
-    "directUseKwh": null,
+    "selfConsumedKwh": null,
     "exportedKwh": null,
     "gridPurchaseKwh": null,
     "electricityPrice": null,
@@ -407,7 +407,7 @@
   {
     "month": "2028-10",
     "productionKwh": null,
-    "directUseKwh": null,
+    "selfConsumedKwh": null,
     "exportedKwh": null,
     "gridPurchaseKwh": null,
     "electricityPrice": null,
@@ -416,7 +416,7 @@
   {
     "month": "2028-11",
     "productionKwh": null,
-    "directUseKwh": null,
+    "selfConsumedKwh": null,
     "exportedKwh": null,
     "gridPurchaseKwh": null,
     "electricityPrice": null,
@@ -425,7 +425,7 @@
   {
     "month": "2028-12",
     "productionKwh": null,
-    "directUseKwh": null,
+    "selfConsumedKwh": null,
     "exportedKwh": null,
     "gridPurchaseKwh": null,
     "electricityPrice": null,
@@ -434,7 +434,7 @@
   {
     "month": "2029-01",
     "productionKwh": null,
-    "directUseKwh": null,
+    "selfConsumedKwh": null,
     "exportedKwh": null,
     "gridPurchaseKwh": null,
     "electricityPrice": null,
@@ -443,7 +443,7 @@
   {
     "month": "2029-02",
     "productionKwh": null,
-    "directUseKwh": null,
+    "selfConsumedKwh": null,
     "exportedKwh": null,
     "gridPurchaseKwh": null,
     "electricityPrice": null,
@@ -452,7 +452,7 @@
   {
     "month": "2029-03",
     "productionKwh": null,
-    "directUseKwh": null,
+    "selfConsumedKwh": null,
     "exportedKwh": null,
     "gridPurchaseKwh": null,
     "electricityPrice": null,
@@ -461,7 +461,7 @@
   {
     "month": "2029-04",
     "productionKwh": null,
-    "directUseKwh": null,
+    "selfConsumedKwh": null,
     "exportedKwh": null,
     "gridPurchaseKwh": null,
     "electricityPrice": null,
@@ -470,7 +470,7 @@
   {
     "month": "2029-05",
     "productionKwh": null,
-    "directUseKwh": null,
+    "selfConsumedKwh": null,
     "exportedKwh": null,
     "gridPurchaseKwh": null,
     "electricityPrice": null,
@@ -479,7 +479,7 @@
   {
     "month": "2029-06",
     "productionKwh": null,
-    "directUseKwh": null,
+    "selfConsumedKwh": null,
     "exportedKwh": null,
     "gridPurchaseKwh": null,
     "electricityPrice": null,
@@ -488,7 +488,7 @@
   {
     "month": "2029-07",
     "productionKwh": null,
-    "directUseKwh": null,
+    "selfConsumedKwh": null,
     "exportedKwh": null,
     "gridPurchaseKwh": null,
     "electricityPrice": null,
@@ -497,7 +497,7 @@
   {
     "month": "2029-08",
     "productionKwh": null,
-    "directUseKwh": null,
+    "selfConsumedKwh": null,
     "exportedKwh": null,
     "gridPurchaseKwh": null,
     "electricityPrice": null,
@@ -506,7 +506,7 @@
   {
     "month": "2029-09",
     "productionKwh": null,
-    "directUseKwh": null,
+    "selfConsumedKwh": null,
     "exportedKwh": null,
     "gridPurchaseKwh": null,
     "electricityPrice": null,
@@ -515,7 +515,7 @@
   {
     "month": "2029-10",
     "productionKwh": null,
-    "directUseKwh": null,
+    "selfConsumedKwh": null,
     "exportedKwh": null,
     "gridPurchaseKwh": null,
     "electricityPrice": null,
@@ -524,7 +524,7 @@
   {
     "month": "2029-11",
     "productionKwh": null,
-    "directUseKwh": null,
+    "selfConsumedKwh": null,
     "exportedKwh": null,
     "gridPurchaseKwh": null,
     "electricityPrice": null,
@@ -533,7 +533,7 @@
   {
     "month": "2029-12",
     "productionKwh": null,
-    "directUseKwh": null,
+    "selfConsumedKwh": null,
     "exportedKwh": null,
     "gridPurchaseKwh": null,
     "electricityPrice": null,
@@ -542,7 +542,7 @@
   {
     "month": "2030-01",
     "productionKwh": null,
-    "directUseKwh": null,
+    "selfConsumedKwh": null,
     "exportedKwh": null,
     "gridPurchaseKwh": null,
     "electricityPrice": null,
@@ -551,7 +551,7 @@
   {
     "month": "2030-02",
     "productionKwh": null,
-    "directUseKwh": null,
+    "selfConsumedKwh": null,
     "exportedKwh": null,
     "gridPurchaseKwh": null,
     "electricityPrice": null,
@@ -560,7 +560,7 @@
   {
     "month": "2030-03",
     "productionKwh": null,
-    "directUseKwh": null,
+    "selfConsumedKwh": null,
     "exportedKwh": null,
     "gridPurchaseKwh": null,
     "electricityPrice": null,
@@ -569,7 +569,7 @@
   {
     "month": "2030-04",
     "productionKwh": null,
-    "directUseKwh": null,
+    "selfConsumedKwh": null,
     "exportedKwh": null,
     "gridPurchaseKwh": null,
     "electricityPrice": null,
@@ -578,7 +578,7 @@
   {
     "month": "2030-05",
     "productionKwh": null,
-    "directUseKwh": null,
+    "selfConsumedKwh": null,
     "exportedKwh": null,
     "gridPurchaseKwh": null,
     "electricityPrice": null,
@@ -587,7 +587,7 @@
   {
     "month": "2030-06",
     "productionKwh": null,
-    "directUseKwh": null,
+    "selfConsumedKwh": null,
     "exportedKwh": null,
     "gridPurchaseKwh": null,
     "electricityPrice": null,
@@ -596,7 +596,7 @@
   {
     "month": "2030-07",
     "productionKwh": null,
-    "directUseKwh": null,
+    "selfConsumedKwh": null,
     "exportedKwh": null,
     "gridPurchaseKwh": null,
     "electricityPrice": null,
@@ -605,7 +605,7 @@
   {
     "month": "2030-08",
     "productionKwh": null,
-    "directUseKwh": null,
+    "selfConsumedKwh": null,
     "exportedKwh": null,
     "gridPurchaseKwh": null,
     "electricityPrice": null,
@@ -614,7 +614,7 @@
   {
     "month": "2030-09",
     "productionKwh": null,
-    "directUseKwh": null,
+    "selfConsumedKwh": null,
     "exportedKwh": null,
     "gridPurchaseKwh": null,
     "electricityPrice": null,
@@ -623,7 +623,7 @@
   {
     "month": "2030-10",
     "productionKwh": null,
-    "directUseKwh": null,
+    "selfConsumedKwh": null,
     "exportedKwh": null,
     "gridPurchaseKwh": null,
     "electricityPrice": null,
@@ -632,7 +632,7 @@
   {
     "month": "2030-11",
     "productionKwh": null,
-    "directUseKwh": null,
+    "selfConsumedKwh": null,
     "exportedKwh": null,
     "gridPurchaseKwh": null,
     "electricityPrice": null,
@@ -641,7 +641,7 @@
   {
     "month": "2030-12",
     "productionKwh": null,
-    "directUseKwh": null,
+    "selfConsumedKwh": null,
     "exportedKwh": null,
     "gridPurchaseKwh": null,
     "electricityPrice": null,
