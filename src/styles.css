@@ -180,7 +180,7 @@ body {
 .stat-violet::before { background: linear-gradient(90deg, #a78bfa, #7c3aed); }
 .stat-emerald::before { background: linear-gradient(90deg, #34d399, #059669); }
 .stat-orange::before { background: linear-gradient(90deg, #fb923c, #ea580c); }
-.stat-teal::before { background: linear-gradient(90deg, #2dd4bf, #0d9488); }
+.stat-teal::before { background: linear-gradient(90deg, #f472b6, #ec4899);
 
 
 .stat-icon-wrap {
