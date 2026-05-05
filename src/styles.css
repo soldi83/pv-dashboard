@@ -95,11 +95,11 @@ body {
 }
 
 .meta-grid {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
 }
 
 .kpi-grid {
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
 }
 
 .dashboard-grid {
@@ -114,9 +114,11 @@ body {
   box-shadow: 0 10px 28px rgba(15, 23, 42, 0.06);
 }
 
-.meta-label {
+.meta-label,
+.stat-label {
   color: #64748b;
-  font-size: 0.9rem;
+  font-size: 0.84rem;
+  line-height: 1.3;
 }
 
 .meta-value {
@@ -132,36 +134,7 @@ body {
   gap: 14px;
   overflow: hidden;
   position: relative;
-  min-height: 132px;
-}
-
-
-.stat-copy {
-  flex: 1;
-  min-width: 0;
-  padding-right: 4px;
-}
-
-.stat-label {
-  color: #64748b;
-  font-size: 0.9rem;
-  line-height: 1.3;
-}
-
-.stat-value {
-  margin-top: 12px;
-  font-size: clamp(1.35rem, 1.5vw, 1.65rem);
-  font-weight: 800;
-  line-height: 1.15;
-  overflow-wrap: anywhere;
-}
-
-.stat-sub {
-  margin-top: 8px;
-  color: #64748b;
-  font-size: 0.82rem;
-  line-height: 1.35;
-  overflow-wrap: anywhere;
+  min-height: 124px;
 }
 
 .stat-card::before {
@@ -180,19 +153,40 @@ body {
 .stat-violet::before { background: linear-gradient(90deg, #a78bfa, #7c3aed); }
 .stat-emerald::before { background: linear-gradient(90deg, #34d399, #059669); }
 .stat-orange::before { background: linear-gradient(90deg, #fb923c, #ea580c); }
-.stat-teal::before { background: linear-gradient(90deg, #f472b6, #ec4899); }
+.stat-teal::before { background: linear-gradient(90deg, #f472b6, #db2777); }
 
+.stat-copy {
+  flex: 1;
+  min-width: 0;
+  padding-right: 4px;
+}
+
+.stat-value {
+  margin-top: 10px;
+  font-size: clamp(1.18rem, 1.35vw, 1.42rem);
+  font-weight: 800;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+.stat-sub {
+  margin-top: 7px;
+  color: #64748b;
+  font-size: 0.76rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
 
 .stat-icon-wrap {
-  width: 26px;
-  height: 26px;
-  border-radius: 9px;
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
   display: grid;
   place-items: center;
   color: white;
   flex-shrink: 0;
-  margin-top: 6px;
-  box-shadow: 0 6px 12px rgba(15, 23, 42, 0.10);
+  margin-top: 4px;
+  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.12);
 }
 
 .stat-rose .stat-icon-wrap { background: linear-gradient(135deg, #fb7185, #ef4444); }
@@ -201,7 +195,7 @@ body {
 .stat-violet .stat-icon-wrap { background: linear-gradient(135deg, #a78bfa, #7c3aed); }
 .stat-emerald .stat-icon-wrap { background: linear-gradient(135deg, #34d399, #059669); }
 .stat-orange .stat-icon-wrap { background: linear-gradient(135deg, #fb923c, #ea580c); }
-.stat-teal .stat-icon-wrap { background: linear-gradient(135deg, #f472b6, #ec4899); }
+.stat-teal .stat-icon-wrap { background: linear-gradient(135deg, #f472b6, #db2777); }
 
 .span-2 {
   grid-column: span 2;
@@ -500,4 +494,10 @@ body {
     padding: 12px 8px;
     font-size: 0.9rem;
   }
+}
+
+
+/* Feinjustierung KPI-Karten */
+.kpi-grid .card {
+  padding: 20px;
 }
