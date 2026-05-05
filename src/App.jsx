@@ -7,17 +7,11 @@ import { loadMonthlyData } from './loadMonthlyData';
 const currency = new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 });
 const number = new Intl.NumberFormat('de-CH', { maximumFractionDigits: 2 });
 const percent = new Intl.NumberFormat('de-CH', { style: 'percent', maximumFractionDigits: 1 });
-const COLORS = {
-  solar: '#f59e0b',
-  ownUse: '#10b981',
-  grid: '#3b82f6',
-  export: '#8b5cf6',
-  neighbor: '#ec4899',
-  money: '#ef4444'
-};
+const COLORS = { solar: '#f59e0b', ownUse: '#10b981', grid: '#3b82f6', export: '#8b5cf6', neighbor: '#ec4899', money: '#ef4444' };
 const MONTH_LABELS = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
 const toNumber = (value) => (typeof value === 'number' && Number.isFinite(value) ? value : 0);
-const NEIGHBOR_FEED_IN_TARIFF = typeof meta.neighborFeedInTariff === 'number' ? meta.neighborFeedInTariff : 0.2;
+const DEFAULT_SOLARSPLIT_TARIFF = 0.2;
+const DEFAULT_SOLARSPLIT_SERVICE_FEE = 0.0325;
 
 function Card({ children, className = '' }) {
   return <section className={`card ${className}`}>{children}</section>;
@@ -31,9 +25,7 @@ function StatCard({ label, value, sub, color, icon: Icon }) {
         <div className="stat-value">{value}</div>
         {sub ? <div className="stat-sub">{sub}</div> : null}
       </div>
-      <div className="stat-icon-wrap">
-        <Icon size={16} strokeWidth={2.1} />
-      </div>
+      <div className="stat-icon-wrap"><Icon size={16} strokeWidth={2.1} /></div>
     </Card>
   );
 }
@@ -72,6 +64,8 @@ function buildYearlyData(rows) {
         gridPurchaseKwh: 0,
         ownUseSavings: 0,
         feedInGrossRevenue: 0,
+        solarsplitGrossRevenue: 0,
+        solarsplitServiceFeeAmount: 0,
       });
     }
 
@@ -85,6 +79,8 @@ function buildYearlyData(rows) {
     const grid = toNumber(row.gridPurchaseKwh);
     const elec = typeof row.electricityPrice === 'number' ? row.electricityPrice : 0;
     const tariff = typeof row.feedInTariff === 'number' ? row.feedInTariff : 0;
+    const solarsplitTariff = typeof row.solarsplitTariff === 'number' ? row.solarsplitTariff : DEFAULT_SOLARSPLIT_TARIFF;
+    const solarsplitServiceFee = typeof row.solarsplitServiceFee === 'number' ? row.solarsplitServiceFee : DEFAULT_SOLARSPLIT_SERVICE_FEE;
 
     const hasValues = production > 0 || selfConsumed > 0 || exported > 0 || neighborExport > 0 || grid > 0;
     if (hasValues) target.monthsWithValues += 1;
@@ -96,6 +92,8 @@ function buildYearlyData(rows) {
     target.gridPurchaseKwh += grid;
     target.ownUseSavings += selfConsumed * elec;
     target.feedInGrossRevenue += exported * tariff;
+    target.solarsplitGrossRevenue += neighborExport * solarsplitTariff;
+    target.solarsplitServiceFeeAmount += neighborExport * solarsplitServiceFee;
   });
 
   return Array.from(grouped.values())
@@ -106,7 +104,9 @@ function buildYearlyData(rows) {
       const exportedKwh = Math.max(grossExportedKwh - neighborExportKwh, 0);
       const averageFeedInTariff = grossExportedKwh > 0 ? item.feedInGrossRevenue / grossExportedKwh : 0;
       const feedInRevenue = exportedKwh * averageFeedInTariff;
-      const neighborFeedInRevenue = neighborExportKwh * NEIGHBOR_FEED_IN_TARIFF;
+      const solarsplitGrossRevenue = item.solarsplitGrossRevenue;
+      const solarsplitServiceFeeAmount = item.solarsplitServiceFeeAmount;
+      const neighborFeedInRevenue = Math.max(solarsplitGrossRevenue - solarsplitServiceFeeAmount, 0);
       const totalFeedInRevenue = feedInRevenue + neighborFeedInRevenue;
       const pvConsumptionKwh = item.productionKwh - grossExportedKwh;
       const consumptionKwh = item.selfConsumedKwh + item.gridPurchaseKwh;
@@ -119,6 +119,8 @@ function buildYearlyData(rows) {
         pvConsumptionKwh,
         consumptionKwh,
         feedInRevenue,
+        solarsplitGrossRevenue,
+        solarsplitServiceFeeAmount,
         neighborFeedInRevenue,
         totalFeedInRevenue,
         annualBenefit: item.ownUseSavings + totalFeedInRevenue,
@@ -166,11 +168,13 @@ export default function App() {
         acc.ownUseSavings += row.ownUseSavings;
         acc.feedInRevenue += row.feedInRevenue;
         acc.neighborFeedInRevenue += row.neighborFeedInRevenue;
+        acc.solarsplitGrossRevenue += row.solarsplitGrossRevenue || 0;
+        acc.solarsplitServiceFeeAmount += row.solarsplitServiceFeeAmount || 0;
         acc.totalFeedInRevenue += row.totalFeedInRevenue;
         acc.annualBenefit += row.annualBenefit;
         return acc;
       },
-      { productionKwh: 0, selfConsumedKwh: 0, grossExportedKwh: 0, neighborExportKwh: 0, exportedKwh: 0, gridPurchaseKwh: 0, ownUseSavings: 0, feedInRevenue: 0, neighborFeedInRevenue: 0, totalFeedInRevenue: 0, annualBenefit: 0 }
+      { productionKwh: 0, selfConsumedKwh: 0, grossExportedKwh: 0, neighborExportKwh: 0, exportedKwh: 0, gridPurchaseKwh: 0, ownUseSavings: 0, feedInRevenue: 0, solarsplitGrossRevenue: 0, solarsplitServiceFeeAmount: 0, neighborFeedInRevenue: 0, totalFeedInRevenue: 0, annualBenefit: 0 }
     );
 
     const consumptionKwh = base.selfConsumedKwh + base.gridPurchaseKwh;
@@ -200,14 +204,15 @@ export default function App() {
     { label: 'Autarkie', value: totals.autarky == null ? '–' : percent.format(totals.autarky), icon: Home, color: 'sky' },
     { label: 'Eigenverbrauchsquote', value: totals.selfConsumptionRate == null ? '–' : percent.format(totals.selfConsumptionRate), icon: Sun, color: 'violet' },
     { label: 'Produktion gesamt', value: `${number.format(totals.productionKwh)} kWh`, icon: Zap, color: 'emerald' },
-    { label: 'Solarsplit', value: `${number.format(totals.neighborExportKwh)} kWh`, icon: GitBranch, color: 'teal' },    { label: 'Statische Amortisation', value: totals.paybackYears ? `${number.format(totals.paybackYears)} Jahre` : '–', icon: Gauge, color: 'orange' },
+    { label: 'Solarsplit', value: `${number.format(totals.neighborExportKwh)} kWh`, icon: GitBranch, color: 'teal' },
+    { label: 'Statische Amortisation', value: totals.paybackYears ? `${number.format(totals.paybackYears)} Jahre` : '–', icon: Gauge, color: 'orange' },
   ];
 
   const yearlyEnergyChart = yearlyData.map((row) => ({
     year: String(row.year),
     Erzeugung: row.productionKwh,
     'PV Verbrauch': row.pvConsumptionKwh,
-    'Solarsplit': row.neighborExportKwh,
+    Solarsplit: row.neighborExportKwh,
     'Einspeisung EW': row.exportedKwh,
     Netzbezug: row.gridPurchaseKwh,
   }));
@@ -398,7 +403,9 @@ export default function App() {
                 <th>Eigenverbrauchsquote</th>
                 <th>Ersparnis EV</th>
                 <th>Einspeiseertrag EW</th>
-                <th>Ertrag Solarsplit</th>
+                <th>Solarsplit brutto</th>
+                <th>Dienstleistung Solarsplit</th>
+                <th>Ertrag Solarsplit netto</th>
                 <th>Total Ertrag</th>
               </tr>
             </thead>
@@ -417,6 +424,8 @@ export default function App() {
                   <td>{row.selfConsumptionRate == null ? '–' : percent.format(row.selfConsumptionRate)}</td>
                   <td>{row.ownUseSavings > 0 ? currency.format(row.ownUseSavings) : '–'}</td>
                   <td>{row.feedInRevenue > 0 ? currency.format(row.feedInRevenue) : '–'}</td>
+                  <td>{row.solarsplitGrossRevenue > 0 ? currency.format(row.solarsplitGrossRevenue) : '–'}</td>
+                  <td>{row.solarsplitServiceFeeAmount > 0 ? `-${currency.format(row.solarsplitServiceFeeAmount)}` : '–'}</td>
                   <td>{row.neighborFeedInRevenue > 0 ? currency.format(row.neighborFeedInRevenue) : '–'}</td>
                   <td className="col-total">{row.annualBenefit > 0 ? currency.format(row.annualBenefit) : '–'}</td>
                 </tr>
