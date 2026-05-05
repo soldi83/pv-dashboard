@@ -4,7 +4,7 @@ import { Coins, Gauge, GitBranch, Home, PiggyBank, Sun, Zap } from 'lucide-react
 import meta from './data/meta.json';
 import { loadMonthlyData } from './loadMonthlyData';
 
-const currency = new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 });
+const currency = new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const number = new Intl.NumberFormat('de-CH', { maximumFractionDigits: 2 });
 const percent = new Intl.NumberFormat('de-CH', { style: 'percent', maximumFractionDigits: 1 });
 const COLORS = { solar: '#f59e0b', ownUse: '#10b981', grid: '#3b82f6', export: '#8b5cf6', neighbor: '#ec4899', money: '#ef4444' };
@@ -204,7 +204,7 @@ export default function App() {
     { label: 'Autarkie', value: totals.autarky == null ? '–' : percent.format(totals.autarky), icon: Home, color: 'sky' },
     { label: 'Eigenverbrauchsquote', value: totals.selfConsumptionRate == null ? '–' : percent.format(totals.selfConsumptionRate), icon: Sun, color: 'violet' },
     { label: 'Produktion gesamt', value: `${number.format(totals.productionKwh)} kWh`, icon: Zap, color: 'emerald' },
-    { label: 'Solarsplit', value: `${number.format(totals.neighborExportKwh)} kWh`, icon: GitBranch, color: 'teal' },
+    { label: 'Solarsplit', value: currencyExact.format(totals.neighborFeedInRevenue), icon: GitBranch, color: 'teal' },
     { label: 'Statische Amortisation', value: totals.paybackYears ? `${number.format(totals.paybackYears)} Jahre` : '–', icon: Gauge, color: 'orange' },
   ];
 
