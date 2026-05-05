@@ -1,13 +1,20 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, BarChart, Bar, ComposedChart } from 'recharts';
-import { Coins, Gauge, Home, PiggyBank, Sun, Users, Zap } from 'lucide-react';
+import { Coins, Gauge, GitBranch, Home, PiggyBank, Sun, Zap } from 'lucide-react';
 import meta from './data/meta.json';
 import { loadMonthlyData } from './loadMonthlyData';
 
 const currency = new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 });
 const number = new Intl.NumberFormat('de-CH', { maximumFractionDigits: 2 });
 const percent = new Intl.NumberFormat('de-CH', { style: 'percent', maximumFractionDigits: 1 });
-const COLORS = { solar: '#f59e0b', ownUse: '#10b981', grid: '#3b82f6', export: '#8b5cf6', neighbor: '#14b8a6', money: '#ef4444' };
+const COLORS = {
+  solar: '#f59e0b',
+  ownUse: '#10b981',
+  grid: '#3b82f6',
+  export: '#8b5cf6',
+  neighbor: '#ec4899',
+  money: '#ef4444'
+};
 const MONTH_LABELS = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
 const toNumber = (value) => (typeof value === 'number' && Number.isFinite(value) ? value : 0);
 const NEIGHBOR_FEED_IN_TARIFF = typeof meta.neighborFeedInTariff === 'number' ? meta.neighborFeedInTariff : 0.2;
@@ -19,12 +26,14 @@ function Card({ children, className = '' }) {
 function StatCard({ label, value, sub, color, icon: Icon }) {
   return (
     <Card className={`stat-card stat-${color}`}>
-      <div>
+      <div className="stat-copy">
         <div className="stat-label">{label}</div>
         <div className="stat-value">{value}</div>
         {sub ? <div className="stat-sub">{sub}</div> : null}
       </div>
-      <div className="stat-icon-wrap"><Icon size={22} /></div>
+      <div className="stat-icon-wrap">
+        <Icon size={20} strokeWidth={2.1} />
+      </div>
     </Card>
   );
 }
@@ -191,15 +200,14 @@ export default function App() {
     { label: 'Autarkie', value: totals.autarky == null ? '–' : percent.format(totals.autarky), icon: Home, color: 'sky' },
     { label: 'Eigenverbrauchsquote', value: totals.selfConsumptionRate == null ? '–' : percent.format(totals.selfConsumptionRate), icon: Sun, color: 'violet' },
     { label: 'Produktion gesamt', value: `${number.format(totals.productionKwh)} kWh`, icon: Zap, color: 'emerald' },
-    { label: 'Nachbar/Solarsplit', value: `${number.format(totals.neighborExportKwh)} kWh`, sub: `${currency.format(totals.neighborFeedInRevenue)} bei ${number.format(NEIGHBOR_FEED_IN_TARIFF * 100)} Rp./kWh`, icon: Users, color: 'teal' },
-    { label: 'Statische Amortisation', value: totals.paybackYears ? `${number.format(totals.paybackYears)} Jahre` : '–', icon: Gauge, color: 'orange' },
+    { label: 'Solarsplit', value: `${number.format(totals.neighborExportKwh)} kWh`, sub: `${currency.format(totals.neighborFeedInRevenue)} bei ${number.format(NEIGHBOR_FEED_IN_TARIFF * 100)} Rp./kWh`, icon: GitBranch, color: 'teal' },    { label: 'Statische Amortisation', value: totals.paybackYears ? `${number.format(totals.paybackYears)} Jahre` : '–', icon: Gauge, color: 'orange' },
   ];
 
   const yearlyEnergyChart = yearlyData.map((row) => ({
     year: String(row.year),
     Erzeugung: row.productionKwh,
     'PV Verbrauch': row.pvConsumptionKwh,
-    'Nachbar/Solarsplit': row.neighborExportKwh,
+    'Solarsplit': row.neighborExportKwh,
     'Einspeisung EW': row.exportedKwh,
     Netzbezug: row.gridPurchaseKwh,
   }));
@@ -298,7 +306,7 @@ export default function App() {
                 <Legend />
                 <Bar dataKey="Erzeugung" fill={COLORS.solar} radius={[8, 8, 0, 0]} />
                 <Bar dataKey="PV Verbrauch" fill={COLORS.ownUse} radius={[8, 8, 0, 0]} />
-                <Bar dataKey="Nachbar/Solarsplit" fill={COLORS.neighbor} radius={[8, 8, 0, 0]} />
+                <Bar dataKey="Solarsplit" fill={COLORS.neighbor} radius={[8, 8, 0, 0]} />
                 <Bar dataKey="Einspeisung EW" fill={COLORS.export} radius={[8, 8, 0, 0]} />
                 <Bar dataKey="Netzbezug" fill={COLORS.grid} radius={[8, 8, 0, 0]} />
               </BarChart>
@@ -383,14 +391,14 @@ export default function App() {
                 <th>PV Verbrauch</th>
                 <th>Eigenverbrauch</th>
                 <th>Einspeisung brutto</th>
-                <th>Nachbar/Solarsplit</th>
+                <th>Solarsplit</th>
                 <th>Einspeisung EW netto</th>
                 <th>Netzbezug</th>
                 <th>Autarkie</th>
                 <th>Eigenverbrauchsquote</th>
                 <th>Ersparnis EV</th>
                 <th>Einspeiseertrag EW</th>
-                <th>Ertrag Nachbar</th>
+                <th>Ertrag Solarsplit</th>
                 <th>Total Ertrag</th>
               </tr>
             </thead>
