@@ -95,7 +95,7 @@ body {
 }
 
 .meta-grid {
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .kpi-grid {
@@ -180,19 +180,19 @@ body {
 .stat-violet::before { background: linear-gradient(90deg, #a78bfa, #7c3aed); }
 .stat-emerald::before { background: linear-gradient(90deg, #34d399, #059669); }
 .stat-orange::before { background: linear-gradient(90deg, #fb923c, #ea580c); }
-.stat-teal::before { background: linear-gradient(90deg, #f472b6, #ec4899); }
+.stat-teal::before { background: linear-gradient(90deg, #2dd4bf, #0d9488); }
 
 
 .stat-icon-wrap {
-  width: 34px;
-  height: 34px;
-  border-radius: 14px;
+  width: 26px;
+  height: 26px;
+  border-radius: 9px;
   display: grid;
   place-items: center;
   color: white;
   flex-shrink: 0;
   margin-top: 6px;
-  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.12);
+  box-shadow: 0 6px 12px rgba(15, 23, 42, 0.10);
 }
 
 .stat-rose .stat-icon-wrap { background: linear-gradient(135deg, #fb7185, #ef4444); }
@@ -201,7 +201,7 @@ body {
 .stat-violet .stat-icon-wrap { background: linear-gradient(135deg, #a78bfa, #7c3aed); }
 .stat-emerald .stat-icon-wrap { background: linear-gradient(135deg, #34d399, #059669); }
 .stat-orange .stat-icon-wrap { background: linear-gradient(135deg, #fb923c, #ea580c); }
-.stat-teal .stat-icon-wrap { background: linear-gradient(135deg, #f472b6, #ec4899); }
+.stat-teal .stat-icon-wrap { background: linear-gradient(135deg, #2dd4bf, #0d9488); }
 
 .span-2 {
   grid-column: span 2;
