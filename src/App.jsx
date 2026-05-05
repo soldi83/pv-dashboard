@@ -25,7 +25,7 @@ function StatCard({ label, value, sub, color, icon: Icon }) {
         <div className="stat-value">{value}</div>
         {sub ? <div className="stat-sub">{sub}</div> : null}
       </div>
-      <div className="stat-icon-wrap"><Icon size={16} strokeWidth={2.1} /></div>
+      <div className="stat-icon-wrap"><Icon size={13} strokeWidth={2.1} /></div>
     </Card>
   );
 }
@@ -204,7 +204,7 @@ export default function App() {
     { label: 'Autarkie', value: totals.autarky == null ? '–' : percent.format(totals.autarky), icon: Home, color: 'sky' },
     { label: 'Eigenverbrauchsquote', value: totals.selfConsumptionRate == null ? '–' : percent.format(totals.selfConsumptionRate), icon: Sun, color: 'violet' },
     { label: 'Produktion gesamt', value: `${number.format(totals.productionKwh)} kWh`, icon: Zap, color: 'emerald' },
-    { label: 'Solarsplit', value: `${number.format(totals.neighborExportKwh)} kWh`, icon: GitBranch, color: 'teal' },
+    { label: 'Solarsplit', value: `${number.format(totals.neighborExportKwh)} kWh`, sub: `${currency.format(totals.neighborFeedInRevenue)} netto, ${currency.format(totals.solarsplitServiceFeeAmount)} DL-Abzug`, icon: GitBranch, color: 'teal' },
     { label: 'Statische Amortisation', value: totals.paybackYears ? `${number.format(totals.paybackYears)} Jahre` : '–', icon: Gauge, color: 'orange' },
   ];
 
@@ -289,8 +289,6 @@ export default function App() {
       <div className="meta-grid">
         <Card><div className="meta-label">Anlagengrösse</div><div className="meta-value">{number.format(meta.plantSizeKwp)} kWp</div></Card>
         <Card><div className="meta-label">Speichergrösse</div><div className="meta-value">{number.format(meta.batterySizeKwh)} kWh</div></Card>
-        <Card><div className="meta-label">Netto-Investition</div><div className="meta-value">{currency.format(meta.netInvestment)}</div></Card>
-        <Card><div className="meta-label">Datenstand</div><div className="meta-value meta-small">Monatlich gepflegt</div></Card>
         <Card><div className="meta-label">Zeitraum</div><div className="meta-value">2025–2030</div></Card>
       </div>
 
