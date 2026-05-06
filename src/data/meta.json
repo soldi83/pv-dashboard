@@ -1,0 +1,13 @@
+{
+  "title": "PV Meyer",
+  "subtitle": "",
+  "location": "Kirchberg BE",
+  "start": "Juli 2025",
+  "plantSizeKwp": 18.92,
+  "batterySizeKwh": 13.8,
+  "grossInvestment": 51000,
+  "subsidy": 6811,
+  "netInvestment": 44189,
+  "neighborFeedInTariff": 0.2,
+  "solarsplitServiceFee": 0.0325
+}
