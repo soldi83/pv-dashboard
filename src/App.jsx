@@ -129,6 +129,7 @@ function buildYearlyData(rows) {
         neighborExportKwh: 0,
         exportedKwh: 0,
         gridPurchaseKwh: 0,
+        gridPurchaseCost: 0,
         ownUseSavings: 0,
         feedInGrossRevenue: 0,
       });
@@ -155,6 +156,7 @@ function buildYearlyData(rows) {
     target.grossExportedKwh += exported;
     target.neighborExportKwh += neighborExport;
     target.gridPurchaseKwh += grid;
+    target.gridPurchaseCost += grid * elec;
     target.ownUseSavings += selfConsumed * elec;
     target.feedInGrossRevenue += exported * tariff;
   });
@@ -192,7 +194,9 @@ function buildYearlyData(rows) {
         neighborServiceTotal,
         neighborNetRevenue,
         totalFeedInRevenue,
+        gridPurchaseCost: item.gridPurchaseCost,
         annualBenefit: item.ownUseSavings + totalFeedInRevenue,
+        netBalance: totalFeedInRevenue - item.gridPurchaseCost,
         autarky: consumptionKwh > 0 ? item.selfConsumedKwh / consumptionKwh : null,
         selfConsumptionRate: item.productionKwh > 0 ? item.selfConsumedKwh / item.productionKwh : null,
       };
@@ -378,6 +382,7 @@ export default function App() {
         acc.neighborExportKwh += row.neighborExportKwh;
         acc.exportedKwh += row.exportedKwh;
         acc.gridPurchaseKwh += row.gridPurchaseKwh;
+        acc.gridPurchaseCost += row.gridPurchaseCost;
         acc.ownUseSavings += row.ownUseSavings;
         acc.feedInRevenue += row.feedInRevenue;
         acc.neighborGrossRevenue += row.neighborGrossRevenue;
@@ -387,6 +392,7 @@ export default function App() {
         acc.neighborNetRevenue += row.neighborNetRevenue;
         acc.totalFeedInRevenue += row.totalFeedInRevenue;
         acc.annualBenefit += row.annualBenefit;
+        acc.netBalance += row.netBalance;
         return acc;
       },
       {
@@ -396,6 +402,7 @@ export default function App() {
         neighborExportKwh: 0,
         exportedKwh: 0,
         gridPurchaseKwh: 0,
+        gridPurchaseCost: 0,
         ownUseSavings: 0,
         feedInRevenue: 0,
         neighborGrossRevenue: 0,
@@ -405,6 +412,7 @@ export default function App() {
         neighborNetRevenue: 0,
         totalFeedInRevenue: 0,
         annualBenefit: 0,
+        netBalance: 0,
       }
     );
 
@@ -761,6 +769,8 @@ export default function App() {
                   <th>Dienstleistung Solarsplit inkl. MWST</th>
                   <th>Solarsplit netto</th>
                   <th>Total Ertrag</th>
+                  <th>Kosten Netzbezug</th>
+                  <th>Saldo</th>
                 </tr>
               </thead>
               <tbody>
@@ -784,8 +794,40 @@ export default function App() {
                     <td className="col-total">
                       {row.annualBenefit > 0 ? currency.format(row.annualBenefit) : '–'}
                     </td>
+                    <td>
+                      {row.gridPurchaseCost > 0 ? currency.format(row.gridPurchaseCost) : '–'}
+                    </td>
+                    <td className={row.netBalance < 0 ? 'col-negative' : 'col-positive'}>
+                      {row.monthsWithValues === 0 ? '–' : currency.format(row.netBalance)}
+                    </td>
                   </tr>
                 ))}
+                <tr className="totals-row">
+                  <td className="col-year">Total</td>
+                  <td>{number.format(totals.productionKwh)} kWh</td>
+                  <td>{number.format(totals.pvConsumptionKwh)} kWh</td>
+                  <td>{number.format(totals.selfConsumedKwh)} kWh</td>
+                  <td>{number.format(totals.grossExportedKwh)} kWh</td>
+                  <td>{number.format(totals.neighborExportKwh)} kWh</td>
+                  <td>{number.format(totals.exportedKwh)} kWh</td>
+                  <td>{number.format(totals.gridPurchaseKwh)} kWh</td>
+                  <td>{totals.autarky == null ? '–' : percent.format(totals.autarky)}</td>
+                  <td>{totals.selfConsumptionRate == null ? '–' : percent.format(totals.selfConsumptionRate)}</td>
+                  <td>{totals.ownUseSavings > 0 ? currency.format(totals.ownUseSavings) : '–'}</td>
+                  <td>{totals.feedInRevenue > 0 ? currency.format(totals.feedInRevenue) : '–'}</td>
+                  <td>{totals.neighborGrossRevenue > 0 ? currency.format(totals.neighborGrossRevenue) : '–'}</td>
+                  <td>{totals.neighborServiceTotal > 0 ? currency.format(totals.neighborServiceTotal) : '–'}</td>
+                  <td>{totals.neighborNetRevenue > 0 ? currency.format(totals.neighborNetRevenue) : '–'}</td>
+                  <td className="col-total">
+                    {totals.annualBenefit > 0 ? currency.format(totals.annualBenefit) : '–'}
+                  </td>
+                  <td>
+                    {totals.gridPurchaseCost > 0 ? currency.format(totals.gridPurchaseCost) : '–'}
+                  </td>
+                  <td className={totals.netBalance < 0 ? 'col-negative' : 'col-positive'}>
+                    {currency.format(totals.netBalance)}
+                  </td>
+                </tr>
               </tbody>
             </table>
           </div>
