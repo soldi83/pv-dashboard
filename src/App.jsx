@@ -15,7 +15,10 @@ import {
   Coins,
   GitBranch,
   Home,
+  Lock,
+  Save,
   Sun,
+  X,
   Zap,
 } from 'lucide-react';
 import meta from './data/meta.json';
@@ -48,13 +51,19 @@ const COLORS = {
 
 const MONTH_LABELS = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
 
+const EDITABLE_FIELDS = [
+  { key: 'productionKwh', label: 'Produktion (kWh)' },
+  { key: 'selfConsumedKwh', label: 'Eigenverbrauch (kWh)' },
+  { key: 'exportedKwh', label: 'Einspeisung brutto (kWh)' },
+  { key: 'gridPurchaseKwh', label: 'Netzbezug (kWh)' },
+  { key: 'electricityPrice', label: 'Strompreis (CHF/kWh)' },
+  { key: 'feedInTariff', label: 'EW Einspeisetarif (CHF/kWh)' },
+  { key: 'neighborExportKwh', label: 'Solarsplit / Nachbar (kWh)' },
+  { key: 'solarsplitTariff', label: 'Solarsplit Tarif (CHF/kWh)' },
+  { key: 'solarsplitServiceFee', label: 'Solarsplit Service Fee (CHF/kWh)' },
+];
+
 const toNumber = (value) => (typeof value === 'number' && Number.isFinite(value) ? value : 0);
-
-const NEIGHBOR_FEED_IN_TARIFF =
-  typeof meta.neighborFeedInTariff === 'number' ? meta.neighborFeedInTariff : 0.2;
-
-const SOLARSPLIT_SERVICE_FEE =
-  typeof meta.solarsplitServiceFee === 'number' ? meta.solarsplitServiceFee : 0.0325;
 
 const SOLARSPLIT_SERVICE_VAT =
   typeof meta.solarsplitServiceVat === 'number' ? meta.solarsplitServiceVat : 0.081;
@@ -127,8 +136,8 @@ function buildYearlyData(rows) {
     const exported = toNumber(row.exportedKwh);
     const neighborExport = toNumber(row.neighborExportKwh);
     const grid = toNumber(row.gridPurchaseKwh);
-    const electricityPrice = typeof row.electricityPrice === 'number' ? row.electricityPrice : 0;
-    const feedInTariff = typeof row.feedInTariff === 'number' ? row.feedInTariff : 0;
+    const elec = typeof row.electricityPrice === 'number' ? row.electricityPrice : 0;
+    const tariff = typeof row.feedInTariff === 'number' ? row.feedInTariff : 0;
 
     const hasValues =
       production > 0 || selfConsumed > 0 || exported > 0 || neighborExport > 0 || grid > 0;
@@ -140,9 +149,9 @@ function buildYearlyData(rows) {
     target.grossExportedKwh += exported;
     target.neighborExportKwh += neighborExport;
     target.gridPurchaseKwh += grid;
-    target.gridPurchaseCost += grid * electricityPrice;
-    target.ownUseSavings += selfConsumed * electricityPrice;
-    target.feedInGrossRevenue += exported * feedInTariff;
+    target.gridPurchaseCost += grid * elec;
+    target.ownUseSavings += selfConsumed * elec;
+    target.feedInGrossRevenue += exported * tariff;
   });
 
   return Array.from(grouped.values())
@@ -154,19 +163,31 @@ function buildYearlyData(rows) {
       const averageFeedInTariff =
         grossExportedKwh > 0 ? item.feedInGrossRevenue / grossExportedKwh : 0;
 
+      const sampleRow = rows.find((row) => Number(row.month.slice(0, 4)) === item.year);
+      const neighborTariff =
+        typeof sampleRow?.solarsplitTariff === 'number'
+          ? sampleRow.solarsplitTariff
+          : typeof meta.neighborFeedInTariff === 'number'
+            ? meta.neighborFeedInTariff
+            : 0.2;
+
+      const serviceFeePerKwh =
+        typeof sampleRow?.solarsplitServiceFee === 'number'
+          ? sampleRow.solarsplitServiceFee
+          : typeof meta.solarsplitServiceFee === 'number'
+            ? meta.solarsplitServiceFee
+            : 0.0325;
+
       const feedInRevenue = exportedKwh * averageFeedInTariff;
-      const neighborGrossRevenue = neighborExportKwh * NEIGHBOR_FEED_IN_TARIFF;
-      const neighborServiceFee = neighborExportKwh * SOLARSPLIT_SERVICE_FEE;
+      const neighborGrossRevenue = neighborExportKwh * neighborTariff;
+      const neighborServiceFee = neighborExportKwh * serviceFeePerKwh;
       const neighborServiceVat = neighborServiceFee * SOLARSPLIT_SERVICE_VAT;
       const neighborServiceTotal = neighborServiceFee + neighborServiceVat;
       const neighborNetRevenue = neighborGrossRevenue - neighborServiceTotal;
-
       const pvConsumptionKwh = item.productionKwh - grossExportedKwh;
       const consumptionKwh = item.selfConsumedKwh + item.gridPurchaseKwh;
-
       const annualBenefit =
         item.ownUseSavings + feedInRevenue + neighborGrossRevenue - neighborServiceTotal;
-
       const netBalance = annualBenefit - item.gridPurchaseCost;
 
       return {
@@ -202,35 +223,166 @@ function getHeatTextColor(value, maxValue) {
   return value / maxValue > 0.58 ? '#7c2d12' : '#9a3412';
 }
 
+function normaliseValue(raw) {
+  if (raw === '' || raw === null || raw === undefined) return null;
+  const cleaned = String(raw).replace(',', '.');
+  const parsed = Number(cleaned);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function AdminModal({ open, onClose, monthlyData, onSave }) {
+  const [password, setPassword] = useState('');
+  const [selectedMonth, setSelectedMonth] = useState(monthlyData[0]?.month || '');
+  const [form, setForm] = useState({});
+  const [status, setStatus] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    const firstMonth = monthlyData[0]?.month || '';
+    setSelectedMonth((current) => current || firstMonth);
+  }, [open, monthlyData]);
+
+  useEffect(() => {
+    const row = monthlyData.find((entry) => entry.month === selectedMonth);
+    if (!row) return;
+
+    const next = {};
+    EDITABLE_FIELDS.forEach(({ key }) => {
+      next[key] = row[key] ?? '';
+    });
+    setForm(next);
+  }, [selectedMonth, monthlyData]);
+
+  if (!open) return null;
+
+  const handleChange = (key, value) => {
+    setForm((current) => ({ ...current, [key]: value }));
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setStatus('');
+    setSaving(true);
+
+    try {
+      const nextData = monthlyData.map((row) => {
+        if (row.month !== selectedMonth) return row;
+
+        const updated = { ...row };
+        EDITABLE_FIELDS.forEach(({ key }) => {
+          updated[key] = normaliseValue(form[key]);
+        });
+        return updated;
+      });
+
+      await onSave({ password, data: nextData, selectedMonth });
+      setStatus('Gespeichert. GitHub wurde aktualisiert.');
+    } catch (error) {
+      setStatus(error.message || 'Speichern fehlgeschlagen');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="admin-overlay" role="dialog" aria-modal="true" aria-labelledby="admin-title">
+      <div className="admin-modal card">
+        <div className="admin-head">
+          <div>
+            <div className="badge badge-dark">Admin</div>
+            <h2 id="admin-title">Monatsdaten bearbeiten</h2>
+            <p>Wähle einen Monat, passe die Werte an und speichere direkt nach GitHub.</p>
+          </div>
+          <button
+            className="icon-button"
+            onClick={onClose}
+            aria-label="Admin-Fenster schliessen"
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        <form className="admin-form" onSubmit={handleSubmit}>
+          <div className="admin-grid admin-grid-top">
+            <label>
+              <span>Admin-Passwort</span>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Passwort"
+                required
+              />
+            </label>
+
+            <label>
+              <span>Monat</span>
+              <select value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)}>
+                {monthlyData.map((row) => (
+                  <option key={row.month} value={row.month}>
+                    {row.month}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+
+          <div className="admin-grid">
+            {EDITABLE_FIELDS.map((field) => (
+              <label key={field.key}>
+                <span>{field.label}</span>
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  step="any"
+                  value={form[field.key] ?? ''}
+                  onChange={(e) => handleChange(field.key, e.target.value)}
+                  placeholder="leer = null"
+                />
+              </label>
+            ))}
+          </div>
+
+          <div className="admin-actions">
+            <div className="admin-status">{status}</div>
+            <button className="save-button" type="submit" disabled={saving}>
+              <Save size={18} /> {saving ? 'Speichert…' : 'Änderungen speichern'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   const [monthlyData, setMonthlyData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [adminOpen, setAdminOpen] = useState(false);
+
+  const fetchData = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const data = await loadMonthlyData();
+      setMonthlyData(Array.isArray(data) ? data : []);
+    } catch (err) {
+      setError(err.message || 'Unbekannter Fehler');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    let active = true;
-
-    const run = async () => {
-      try {
-        const rows = await loadMonthlyData();
-        if (active) setMonthlyData(Array.isArray(rows) ? rows : []);
-      } catch (err) {
-        if (active) setError(err?.message || 'Fehler beim Laden der Monatsdaten');
-      } finally {
-        if (active) setLoading(false);
-      }
-    };
-
-    run();
-    return () => {
-      active = false;
-    };
+    fetchData();
   }, []);
 
   const yearlyData = useMemo(() => buildYearlyData(monthlyData), [monthlyData]);
 
   const totals = useMemo(() => {
-    const sum = yearlyData.reduce(
+    const base = yearlyData.reduce(
       (acc, row) => {
         acc.productionKwh += row.productionKwh;
         acc.selfConsumedKwh += row.selfConsumedKwh;
@@ -270,26 +422,26 @@ export default function App() {
       }
     );
 
-    const consumptionKwh = sum.selfConsumedKwh + sum.gridPurchaseKwh;
+    const consumptionKwh = base.selfConsumedKwh + base.gridPurchaseKwh;
 
     return {
-      ...sum,
-      pvConsumptionKwh: sum.productionKwh - sum.grossExportedKwh,
+      ...base,
+      pvConsumptionKwh: base.productionKwh - base.grossExportedKwh,
       consumptionKwh,
-      autarky: consumptionKwh > 0 ? sum.selfConsumedKwh / consumptionKwh : null,
-      selfConsumptionRate: sum.productionKwh > 0 ? sum.selfConsumedKwh / sum.productionKwh : null,
-      paybackYears: sum.annualBenefit > 0 ? meta.netInvestment / sum.annualBenefit : null,
+      autarky: consumptionKwh > 0 ? base.selfConsumedKwh / consumptionKwh : null,
+      selfConsumptionRate: base.productionKwh > 0 ? base.selfConsumedKwh / base.productionKwh : null,
+      paybackYears: base.annualBenefit > 0 ? meta.netInvestment / base.annualBenefit : null,
     };
   }, [yearlyData]);
 
   const latestConfiguredMonth = useMemo(() => {
-    const filled = monthlyData.filter((row) =>
+    const withValues = monthlyData.filter((row) =>
       [row.productionKwh, row.selfConsumedKwh, row.exportedKwh, row.neighborExportKwh, row.gridPurchaseKwh].some(
-        (value) => typeof value === 'number' && value > 0
+        (v) => typeof v === 'number' && v > 0
       )
     );
 
-    return filled.length ? filled[filled.length - 1].month : '–';
+    return withValues.length ? withValues[withValues.length - 1].month : '–';
   }, [monthlyData]);
 
   const kpis = [
@@ -343,7 +495,7 @@ export default function App() {
       cumulative += row.annualBenefit;
       return {
         year: String(row.year),
-        'Jahresnutzen': row.annualBenefit,
+        Jahresnutzen: row.annualBenefit,
         Kumuliert: cumulative,
       };
     });
@@ -383,14 +535,27 @@ export default function App() {
     return Array.from(grouped.values()).sort((a, b) => Number(a.year) - Number(b.year));
   }, [monthlyData]);
 
+  const handleSave = async ({ password, data }) => {
+    const response = await fetch('/.netlify/functions/save-monthly-data', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password, data }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || 'Speichern fehlgeschlagen');
+    }
+
+    setMonthlyData(data);
+  };
+
   if (loading) {
     return (
       <div className="app-shell">
         <div className="hero">
-          <div>
-            <div className="badge">PV Dashboard</div>
-            <h1>Daten werden geladen…</h1>
-          </div>
+          <h1>Lade Daten…</h1>
         </div>
       </div>
     );
@@ -400,283 +565,294 @@ export default function App() {
     return (
       <div className="app-shell">
         <div className="hero">
-          <div>
-            <div className="badge">PV Dashboard</div>
-            <h1>Fehler beim Laden</h1>
-            <p>{error}</p>
-          </div>
+          <h1>Fehler beim Laden</h1>
+          <div className="hero-note">{error}</div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="app-shell">
-      <div className="hero">
-        <div>
-          <div className="badge">PV Dashboard</div>
-          <h1>{meta.title}</h1>
-          <p>{meta.location}</p>
+    <>
+      <div className="app-shell">
+        <div className="hero">
+          <div>
+            <div className="hero-topline">
+              <span className="badge">PV Dashboard</span>
+              <button className="admin-trigger" onClick={() => setAdminOpen(true)}>
+                <Lock size={16} /> Admin
+              </button>
+            </div>
+            <h1>{meta.title}</h1>
+          </div>
+
+          <div className="hero-panel">
+            <div className="hero-label">Anlage seit</div>
+            <div className="hero-value">{meta.start}</div>
+            <div className="hero-sub">{meta.location}</div>
+            <div className="hero-note">Letzter befüllter Monat: {latestConfiguredMonth}</div>
+          </div>
         </div>
 
-        <div className="hero-panel">
-          <div className="hero-label">Anlage seit</div>
-          <div className="hero-value">{meta.start}</div>
-          <div className="hero-sub">Letzter befüllter Monat: {latestConfiguredMonth}</div>
+        <div className="meta-grid" style={{ gridTemplateColumns: 'repeat(4, minmax(0, 1fr))' }}>
+          <Card>
+            <div className="meta-label">Anlagengrösse</div>
+            <div className="meta-value">{number.format(meta.plantSizeKwp)} kWp</div>
+          </Card>
+          <Card>
+            <div className="meta-label">Speichergrösse</div>
+            <div className="meta-value">{number.format(meta.batterySizeKwh)} kWh</div>
+          </Card>
+          <Card>
+            <div className="meta-label">Zeitraum</div>
+            <div className="meta-value">2025–2030</div>
+          </Card>
+          <Card>
+            <div className="meta-label">Statische Amortisation</div>
+            <div className="meta-value">
+              {totals.paybackYears ? `${number.format(totals.paybackYears)} Jahre` : '–'}
+            </div>
+          </Card>
         </div>
-      </div>
 
-      <div className="meta-grid" style={{ gridTemplateColumns: 'repeat(4, minmax(0, 1fr))' }}>
-        <Card>
-          <div className="meta-label">Anlagengrösse</div>
-          <div className="meta-value">{number.format(meta.plantSizeKwp)} kWp</div>
-        </Card>
-        <Card>
-          <div className="meta-label">Speichergrösse</div>
-          <div className="meta-value">{number.format(meta.batterySizeKwh)} kWh</div>
-        </Card>
-        <Card>
-          <div className="meta-label">Zeitraum</div>
-          <div className="meta-value">2025–2030</div>
-        </Card>
-        <Card>
-          <div className="meta-label">Statische Amortisation</div>
-          <div className="meta-value">
-            {totals.paybackYears ? `${number.format(totals.paybackYears)} Jahre` : '–'}
-          </div>
-        </Card>
-      </div>
+        <div className="kpi-grid">
+          {kpis.map((item) => (
+            <StatCard key={item.label} {...item} />
+          ))}
+        </div>
 
-      <div className="kpi-grid">
-        {kpis.map((item) => (
-          <StatCard key={item.label} {...item} />
-        ))}
-      </div>
-
-      <div className="dashboard-grid">
-        <Card className="chart-card span-2">
-          <div className="section-head">
-            <div>
-              <h2>Energieflüsse pro Jahr</h2>
+        <div className="dashboard-grid">
+          <Card className="chart-card span-2">
+            <div className="section-head">
+              <div>
+                <h2>Energieflüsse pro Jahr</h2>
+              </div>
             </div>
-          </div>
-          <div className="chart-wrap large">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={yearlyEnergyChart}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis dataKey="year" stroke="#64748b" />
-                <YAxis stroke="#64748b" />
-                <Tooltip content={<TooltipValue suffix=" kWh" />} />
-                <Legend />
-                <Bar dataKey="Gesamtverbrauch" fill={COLORS.totalConsumption} radius={[8, 8, 0, 0]} />
-                <Bar dataKey="Erzeugung" fill={COLORS.solar} radius={[8, 8, 0, 0]} />
-                <Bar dataKey="PV Verbrauch" fill={COLORS.ownUse} radius={[8, 8, 0, 0]} />
-                <Bar dataKey="Solarsplit" fill={COLORS.neighbor} radius={[8, 8, 0, 0]} />
-                <Bar dataKey="Einspeisung EW" fill={COLORS.export} radius={[8, 8, 0, 0]} />
-                <Bar dataKey="Netzbezug" fill={COLORS.grid} radius={[8, 8, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </Card>
-
-        <Card className="chart-card span-2">
-          <div className="section-head">
-            <div>
-              <h2>Jahresnutzen kumuliert</h2>
+            <div className="chart-wrap large">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={yearlyEnergyChart}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                  <XAxis dataKey="year" stroke="#64748b" />
+                  <YAxis stroke="#64748b" />
+                  <Tooltip content={<TooltipValue suffix=" kWh" />} />
+                  <Legend />
+                  <Bar dataKey="Gesamtverbrauch" fill={COLORS.totalConsumption} radius={[8, 8, 0, 0]} />
+                  <Bar dataKey="Erzeugung" fill={COLORS.solar} radius={[8, 8, 0, 0]} />
+                  <Bar dataKey="PV Verbrauch" fill={COLORS.ownUse} radius={[8, 8, 0, 0]} />
+                  <Bar dataKey="Solarsplit" fill={COLORS.neighbor} radius={[8, 8, 0, 0]} />
+                  <Bar dataKey="Einspeisung EW" fill={COLORS.export} radius={[8, 8, 0, 0]} />
+                  <Bar dataKey="Netzbezug" fill={COLORS.grid} radius={[8, 8, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
             </div>
-          </div>
-          <div className="chart-wrap large">
-            <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart data={cumulativeSeries}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis dataKey="year" stroke="#64748b" />
-                <YAxis stroke="#64748b" />
-                <Tooltip content={<TooltipValue suffix=" CHF" />} />
-                <Legend />
-                <Bar dataKey="Jahresnutzen" fill={COLORS.solar} radius={[8, 8, 0, 0]} />
-                <Line
-                  type="monotone"
-                  dataKey="Kumuliert"
-                  stroke={COLORS.ownUse}
-                  strokeWidth={3}
-                  dot={{ r: 4 }}
-                />
-              </ComposedChart>
-            </ResponsiveContainer>
-          </div>
-        </Card>
+          </Card>
 
-        <Card className="chart-card">
-          <div className="section-head">
-            <div>
-              <h2>Pflegestatus je Jahr</h2>
+          <Card className="chart-card span-2">
+            <div className="section-head">
+              <div>
+                <h2>Jahresnutzen kumuliert</h2>
+              </div>
             </div>
-          </div>
-          <div className="year-list">
-            {yearlyData.map((row) => (
-              <div
-                key={row.year}
-                className={`year-row ${row.monthsWithValues === 0 ? 'year-row-empty' : ''}`}
-              >
-                <div>
-                  <div className="year-title">{row.year}</div>
-                  <div className="year-sub">
-                    {row.monthsWithValues > 0
-                      ? `${row.monthsWithValues} von ${row.monthsConfigured} Monaten gepflegt`
-                      : 'Noch keine Werte gepflegt'}
+            <div className="chart-wrap large">
+              <ResponsiveContainer width="100%" height="100%">
+                <ComposedChart data={cumulativeSeries}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                  <XAxis dataKey="year" stroke="#64748b" />
+                  <YAxis stroke="#64748b" />
+                  <Tooltip content={<TooltipValue suffix=" CHF" />} />
+                  <Legend />
+                  <Bar dataKey="Jahresnutzen" fill={COLORS.solar} radius={[8, 8, 0, 0]} />
+                  <Line
+                    type="monotone"
+                    dataKey="Kumuliert"
+                    stroke={COLORS.ownUse}
+                    strokeWidth={3}
+                    dot={{ r: 4 }}
+                  />
+                </ComposedChart>
+              </ResponsiveContainer>
+            </div>
+          </Card>
+
+          <Card className="chart-card">
+            <div className="section-head">
+              <div>
+                <h2>Pflegestatus je Jahr</h2>
+              </div>
+            </div>
+            <div className="year-list">
+              {yearlyData.map((row) => (
+                <div
+                  key={row.year}
+                  className={`year-row ${row.monthsWithValues === 0 ? 'year-row-empty' : ''}`}
+                >
+                  <div>
+                    <div className="year-title">{row.year}</div>
+                    <div className="year-sub">
+                      {row.monthsWithValues > 0
+                        ? `${row.monthsWithValues} von ${row.monthsConfigured} Monaten gepflegt`
+                        : 'Noch keine Werte gepflegt'}
+                    </div>
+                  </div>
+
+                  <div className="year-metrics">
+                    <span>
+                      {row.autarky == null ? 'Autarkie –' : `Autarkie ${percent.format(row.autarky)}`}
+                    </span>
+                    <span>
+                      {row.selfConsumptionRate == null
+                        ? 'EV –'
+                        : `EV ${percent.format(row.selfConsumptionRate)}`}
+                    </span>
+                    <strong>{row.annualBenefit > 0 ? currency.format(row.annualBenefit) : '–'}</strong>
                   </div>
                 </div>
+              ))}
+            </div>
+          </Card>
+        </div>
 
-                <div className="year-metrics">
-                  <span>
-                    {row.autarky == null ? 'Autarkie –' : `Autarkie ${percent.format(row.autarky)}`}
-                  </span>
-                  <span>
-                    {row.selfConsumptionRate == null
-                      ? 'EV –'
-                      : `EV ${percent.format(row.selfConsumptionRate)}`}
-                  </span>
-                  <strong>{row.annualBenefit > 0 ? currency.format(row.annualBenefit) : '–'}</strong>
-                </div>
-              </div>
-            ))}
+        <Card className="heatmap-card">
+          <div className="section-head">
+            <div>
+              <h2>PV Produktion pro Monat</h2>
+            </div>
+          </div>
+
+          <div className="heatmap-wrap">
+            <table className="heatmap-table">
+              <thead>
+                <tr>
+                  <th>Jahr</th>
+                  {MONTH_LABELS.map((month) => (
+                    <th key={month}>{month}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {monthlyProductionRows.map((row) => (
+                  <tr key={row.year}>
+                    <td className="heatmap-year">{row.year}</td>
+                    {row.months.map((month) => (
+                      <td
+                        key={`${row.year}-${month.label}`}
+                        className={`heatmap-cell ${
+                          month.hasValue ? 'heatmap-cell-filled' : 'heatmap-cell-empty'
+                        }`}
+                        style={{
+                          backgroundColor: getHeatColor(month.value, maxMonthlyProduction),
+                          color: getHeatTextColor(month.value, maxMonthlyProduction),
+                        }}
+                      >
+                        {month.value != null && month.value > 0 ? number.format(month.value) : '–'}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+
+        <Card className="footer-card">
+          <div className="table-wrap">
+            <table className="year-table">
+              <thead>
+                <tr>
+                  <th>Jahr</th>
+                  <th>Produktion</th>
+                  <th>PV Verbrauch</th>
+                  <th>Eigenverbrauch</th>
+                  <th>Einspeisung brutto</th>
+                  <th>Solarsplit</th>
+                  <th>Einspeisung EW netto</th>
+                  <th>Netzbezug</th>
+                  <th>Autarkie</th>
+                  <th>Eigenverbrauchsquote</th>
+                  <th>Ersparnis EV</th>
+                  <th>Einspeiseertrag EW</th>
+                  <th>Solarsplit brutto</th>
+                  <th>Dienstleistung Solarsplit inkl. MWST</th>
+                  <th>Solarsplit netto</th>
+                  <th>Total Nutzen</th>
+                  <th>Kosten Netzbezug</th>
+                  <th>Saldo</th>
+                </tr>
+              </thead>
+              <tbody>
+                {yearlyData.map((row) => (
+                  <tr key={row.year} className={row.monthsWithValues === 0 ? 'empty-row' : ''}>
+                    <td className="col-year">{row.year}</td>
+                    <td>{number.format(row.productionKwh)} kWh</td>
+                    <td>{number.format(row.pvConsumptionKwh)} kWh</td>
+                    <td>{number.format(row.selfConsumedKwh)} kWh</td>
+                    <td>{number.format(row.grossExportedKwh)} kWh</td>
+                    <td>{number.format(row.neighborExportKwh)} kWh</td>
+                    <td>{number.format(row.exportedKwh)} kWh</td>
+                    <td>{number.format(row.gridPurchaseKwh)} kWh</td>
+                    <td>{row.autarky == null ? '–' : percent.format(row.autarky)}</td>
+                    <td>{row.selfConsumptionRate == null ? '–' : percent.format(row.selfConsumptionRate)}</td>
+                    <td>{row.ownUseSavings > 0 ? currency.format(row.ownUseSavings) : '–'}</td>
+                    <td>{row.feedInRevenue > 0 ? currency.format(row.feedInRevenue) : '–'}</td>
+                    <td>{row.neighborGrossRevenue > 0 ? currency.format(row.neighborGrossRevenue) : '–'}</td>
+                    <td className="col-negative">
+                      {row.neighborServiceTotal > 0 ? `− ${currency.format(row.neighborServiceTotal)}` : '–'}
+                    </td>
+                    <td>{row.neighborNetRevenue !== 0 ? currency.format(row.neighborNetRevenue) : '–'}</td>
+                    <td className="col-total">
+                      {row.annualBenefit > 0 ? currency.format(row.annualBenefit) : '–'}
+                    </td>
+                    <td className="col-negative">
+                      {row.gridPurchaseCost > 0 ? `− ${currency.format(row.gridPurchaseCost)}` : '–'}
+                    </td>
+                    <td className={row.netBalance < 0 ? 'col-negative' : 'col-positive'}>
+                      {row.monthsWithValues === 0 ? '–' : currency.format(row.netBalance)}
+                    </td>
+                  </tr>
+                ))}
+
+                <tr className="totals-row">
+                  <td className="col-year">Total</td>
+                  <td>{number.format(totals.productionKwh)} kWh</td>
+                  <td>{number.format(totals.pvConsumptionKwh)} kWh</td>
+                  <td>{number.format(totals.selfConsumedKwh)} kWh</td>
+                  <td>{number.format(totals.grossExportedKwh)} kWh</td>
+                  <td>{number.format(totals.neighborExportKwh)} kWh</td>
+                  <td>{number.format(totals.exportedKwh)} kWh</td>
+                  <td>{number.format(totals.gridPurchaseKwh)} kWh</td>
+                  <td>{totals.autarky == null ? '–' : percent.format(totals.autarky)}</td>
+                  <td>{totals.selfConsumptionRate == null ? '–' : percent.format(totals.selfConsumptionRate)}</td>
+                  <td>{totals.ownUseSavings > 0 ? currency.format(totals.ownUseSavings) : '–'}</td>
+                  <td>{totals.feedInRevenue > 0 ? currency.format(totals.feedInRevenue) : '–'}</td>
+                  <td>{totals.neighborGrossRevenue > 0 ? currency.format(totals.neighborGrossRevenue) : '–'}</td>
+                  <td className="col-negative">
+                    {totals.neighborServiceTotal > 0 ? `− ${currency.format(totals.neighborServiceTotal)}` : '–'}
+                  </td>
+                  <td>{totals.neighborNetRevenue !== 0 ? currency.format(totals.neighborNetRevenue) : '–'}</td>
+                  <td className="col-total">
+                    {totals.annualBenefit > 0 ? currency.format(totals.annualBenefit) : '–'}
+                  </td>
+                  <td className="col-negative">
+                    {totals.gridPurchaseCost > totals.netBalance
+                      ? `− ${currency.format(totals.gridPurchaseCost)}`
+                      : '–'}
+                  </td>
+                  <td className={totals.netBalance < 0 ? 'col-negative' : 'col-positive'}>
+                    {currency.format(totals.netBalance)}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </Card>
       </div>
 
-      <Card className="heatmap-card">
-        <div className="section-head">
-          <div>
-            <h2>PV Produktion pro Monat</h2>
-          </div>
-        </div>
-
-        <div className="heatmap-wrap">
-          <table className="heatmap-table">
-            <thead>
-              <tr>
-                <th>Jahr</th>
-                {MONTH_LABELS.map((month) => (
-                  <th key={month}>{month}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {monthlyProductionRows.map((row) => (
-                <tr key={row.year}>
-                  <td className="heatmap-year">{row.year}</td>
-                  {row.months.map((month) => (
-                    <td
-                      key={`${row.year}-${month.label}`}
-                      className={`heatmap-cell ${
-                        month.hasValue ? 'heatmap-cell-filled' : 'heatmap-cell-empty'
-                      }`}
-                      style={{
-                        backgroundColor: getHeatColor(month.value, maxMonthlyProduction),
-                        color: getHeatTextColor(month.value, maxMonthlyProduction),
-                      }}
-                    >
-                      {month.value != null && month.value > 0 ? number.format(month.value) : '–'}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </Card>
-
-      <Card className="footer-card">
-        <div className="table-wrap">
-          <table className="year-table">
-            <thead>
-              <tr>
-                <th>Jahr</th>
-                <th>Produktion</th>
-                <th>PV Verbrauch</th>
-                <th>Eigenverbrauch</th>
-                <th>Einspeisung brutto</th>
-                <th>Solarsplit</th>
-                <th>Einspeisung EW netto</th>
-                <th>Netzbezug</th>
-                <th>Autarkie</th>
-                <th>Eigenverbrauchsquote</th>
-                <th>Ersparnis EV</th>
-                <th>Einspeiseertrag EW</th>
-                <th>Solarsplit brutto</th>
-                <th>Dienstleistung Solarsplit inkl. MWST</th>
-                <th>Solarsplit netto</th>
-                <th>Total Nutzen</th>
-                <th>Kosten Netzbezug</th>
-                <th>Saldo</th>
-              </tr>
-            </thead>
-            <tbody>
-              {yearlyData.map((row) => (
-                <tr key={row.year} className={row.monthsWithValues === 0 ? 'empty-row' : ''}>
-                  <td className="col-year">{row.year}</td>
-                  <td>{number.format(row.productionKwh)} kWh</td>
-                  <td>{number.format(row.pvConsumptionKwh)} kWh</td>
-                  <td>{number.format(row.selfConsumedKwh)} kWh</td>
-                  <td>{number.format(row.grossExportedKwh)} kWh</td>
-                  <td>{number.format(row.neighborExportKwh)} kWh</td>
-                  <td>{number.format(row.exportedKwh)} kWh</td>
-                  <td>{number.format(row.gridPurchaseKwh)} kWh</td>
-                  <td>{row.autarky == null ? '–' : percent.format(row.autarky)}</td>
-                  <td>{row.selfConsumptionRate == null ? '–' : percent.format(row.selfConsumptionRate)}</td>
-                  <td>{row.ownUseSavings > 0 ? currency.format(row.ownUseSavings) : '–'}</td>
-                  <td>{row.feedInRevenue > 0 ? currency.format(row.feedInRevenue) : '–'}</td>
-                  <td>{row.neighborGrossRevenue > 0 ? currency.format(row.neighborGrossRevenue) : '–'}</td>
-                  <td className="col-negative">
-                    {row.neighborServiceTotal > 0 ? `− ${currency.format(row.neighborServiceTotal)}` : '–'}
-                  </td>
-                  <td>{row.neighborNetRevenue !== 0 ? currency.format(row.neighborNetRevenue) : '–'}</td>
-                  <td className="col-total">
-                    {row.annualBenefit > 0 ? currency.format(row.annualBenefit) : '–'}
-                  </td>
-                  <td className="col-negative">
-                    {row.gridPurchaseCost > 0 ? `− ${currency.format(row.gridPurchaseCost)}` : '–'}
-                  </td>
-                  <td className={row.netBalance < 0 ? 'col-negative' : 'col-positive'}>
-                    {row.monthsWithValues === 0 ? '–' : currency.format(row.netBalance)}
-                  </td>
-                </tr>
-              ))}
-
-              <tr className="totals-row">
-                <td className="col-year">Total</td>
-                <td>{number.format(totals.productionKwh)} kWh</td>
-                <td>{number.format(totals.pvConsumptionKwh)} kWh</td>
-                <td>{number.format(totals.selfConsumedKwh)} kWh</td>
-                <td>{number.format(totals.grossExportedKwh)} kWh</td>
-                <td>{number.format(totals.neighborExportKwh)} kWh</td>
-                <td>{number.format(totals.exportedKwh)} kWh</td>
-                <td>{number.format(totals.gridPurchaseKwh)} kWh</td>
-                <td>{totals.autarky == null ? '–' : percent.format(totals.autarky)}</td>
-                <td>{totals.selfConsumptionRate == null ? '–' : percent.format(totals.selfConsumptionRate)}</td>
-                <td>{totals.ownUseSavings > 0 ? currency.format(totals.ownUseSavings) : '–'}</td>
-                <td>{totals.feedInRevenue > 0 ? currency.format(totals.feedInRevenue) : '–'}</td>
-                <td>{totals.neighborGrossRevenue > 0 ? currency.format(totals.neighborGrossRevenue) : '–'}</td>
-                <td className="col-negative">
-                  {totals.neighborServiceTotal > 0 ? `− ${currency.format(totals.neighborServiceTotal)}` : '–'}
-                </td>
-                <td>{totals.neighborNetRevenue !== 0 ? currency.format(totals.neighborNetRevenue) : '–'}</td>
-                <td className="col-total">
-                  {totals.annualBenefit > 0 ? currency.format(totals.annualBenefit) : '–'}
-                </td>
-                <td className="col-negative">
-                  {totals.gridPurchaseCost > Math.max(totals.netBalance, 0)
-                    ? `− ${currency.format(totals.gridPurchaseCost)}`
-                    : '–'}
-                </td>
-                <td className={totals.netBalance < 0 ? 'col-negative' : 'col-positive'}>
-                  {currency.format(totals.netBalance)}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </Card>
-    </div>
+      <AdminModal
+        open={adminOpen}
+        onClose={() => setAdminOpen(false)}
+        monthlyData={monthlyData}
+        onSave={handleSave}
+      />
+    </>
   );
 }
