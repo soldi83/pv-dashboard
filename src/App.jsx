@@ -180,6 +180,9 @@ function buildYearlyData(rows) {
       const pvConsumptionKwh = item.productionKwh - grossExportedKwh;
       const consumptionKwh = item.selfConsumedKwh + item.gridPurchaseKwh;
 
+      const annualBenefit = item.ownUseSavings + totalFeedInRevenue;
+      const netBalance = annualBenefit - item.gridPurchaseCost;
+
       return {
         ...item,
         grossExportedKwh,
@@ -195,8 +198,8 @@ function buildYearlyData(rows) {
         neighborNetRevenue,
         totalFeedInRevenue,
         gridPurchaseCost: item.gridPurchaseCost,
-        annualBenefit: item.ownUseSavings + totalFeedInRevenue,
-        netBalance: totalFeedInRevenue - item.gridPurchaseCost,
+        annualBenefit,
+        netBalance,
         autarky: consumptionKwh > 0 ? item.selfConsumedKwh / consumptionKwh : null,
         selfConsumptionRate: item.productionKwh > 0 ? item.selfConsumedKwh / item.productionKwh : null,
       };
