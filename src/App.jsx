@@ -665,7 +665,9 @@ export default function App() {
                   {totals.annualBenefit > 0 ? currency.format(totals.annualBenefit) : '–'}
                 </td>
                 <td className="col-negative">
-                  {totals.gridPurchaseCost > 0 ? `− ${currency.format(totals.gridPurchaseCost)}` : '–'}
+                  {totals.gridPurchaseCost > Math.max(totals.netBalance, 0)
+                    ? `− ${currency.format(totals.gridPurchaseCost)}`
+                    : '–'}
                 </td>
                 <td className={totals.netBalance < 0 ? 'col-negative' : 'col-positive'}>
                   {currency.format(totals.netBalance)}
