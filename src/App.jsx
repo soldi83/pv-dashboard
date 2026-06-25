@@ -430,7 +430,7 @@ export default function App() {
       consumptionKwh,
       autarky: consumptionKwh > 0 ? base.selfConsumedKwh / consumptionKwh : null,
       selfConsumptionRate: base.productionKwh > 0 ? base.selfConsumedKwh / base.productionKwh : null,
-      paybackYears: base.annualBenefit > 0 ? meta.netInvestment / base.annualBenefit : null,
+      paybackYears: base.netBalance > 0 ? meta.netInvestment / base.netBalance : null,
     };
   }, [yearlyData]);
 
