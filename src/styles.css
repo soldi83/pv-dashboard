@@ -816,3 +816,5 @@ textarea {
     justify-content: center;
   }
 }
+
+.admin-hint { color: #64748b; font-size: 0.85rem; line-height: 1.5; margin: 0.5rem 0 0.75rem; }

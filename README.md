@@ -65,3 +65,16 @@ Danach reicht für Updates:
 1. `src/data/monthlyData.json` auf GitHub ändern
 2. Commit speichern
 3. Netlify deployt automatisch neu
+
+## E-Auto (neu)
+
+Im Admin-Bereich ist das Feld `E-Auto: Ladestrom zuhause (kWh)` neu verfügbar.
+Wert monatlich von Hand erfassen; nur die **zu Hause** geladene Energie eintragen, bevorzugt Wallbox-Messung inkl. Ladeverlusten.
+`evChargingKwh` wird in der separaten Datei `monthlyData-mit-e-auto.json` als `null` für alle bestehenden Monate ergänzt.
+
+**Wichtig:** `Gesamtverbrauch = Eigenverbrauch + Netzbezug`; darin ist die Wallbox bereits enthalten.
+`Hausverbrauch ohne E-Auto = Gesamtverbrauch - E-Auto`. Keine neue Energie zu Total, Autarkie, Einnahmen oder Kosten addieren.
+Im Energieflussdiagramm bildet ein gestapelter Balken die Teilmengen Haus + E-Auto ab.
+Die Datendatei liegt im separaten Repository `soldi83/pv-dashboard-data` unter `monthlyData.json` und muss dort aktualisiert werden.
+
+Beim manuellen Erfassen darauf achten, dass externe Ladungen nicht mitgezählt werden. Wenn die Mercedes-App nur die ins Fahrzeug geladene Energie ausweist, können Wallbox-Ladeverluste fehlen.
