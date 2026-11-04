@@ -58,7 +58,10 @@ export default async (req) => {
     const token = process.env.GITHUB_TOKEN;
     const owner = process.env.GITHUB_OWNER || 'soldi83';
     const repo = process.env.GITHUB_DATA_REPO || 'pv-dashboard-data';
-    const branch = process.env.GITHUB_BRANCH || 'main';
+    // Keep E-Auto branch deploy writes separate from production data.
+    const branch = process.env.BRANCH === 'feature/e-auto'
+      ? 'feature/e-auto'
+      : (process.env.GITHUB_BRANCH || 'main');
     const path = process.env.GITHUB_DATA_PATH || 'monthlyData.json';
 
     if (!token) {

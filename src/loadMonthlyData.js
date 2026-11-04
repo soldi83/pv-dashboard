@@ -1,6 +1,8 @@
 export async function loadMonthlyData() {
-  const url =
-    'https://api.github.com/repos/soldi83/pv-dashboard-data/contents/monthlyData.json?ref=main';
+  // Netlify branch deployments use the corresponding data branch.
+  // Production and local builds continue to use main.
+  const branch = __DEPLOY_BRANCH__ === 'feature/e-auto' ? 'feature/e-auto' : 'main';
+  const url = `https://api.github.com/repos/soldi83/pv-dashboard-data/contents/monthlyData.json?ref=${encodeURIComponent(branch)}`;
 
   const res = await fetch(url, {
     headers: {

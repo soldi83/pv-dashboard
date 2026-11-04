@@ -44,6 +44,7 @@ const COLORS = {
   solar: '#f59e0b',
   ownUse: '#10b981',
   totalConsumption: '#ef4444',
+  ev: '#06b6d4',
   grid: '#3b82f6',
   export: '#8b5cf6',
   neighbor: '#ec4899',
@@ -56,6 +57,7 @@ const EDITABLE_FIELDS = [
   { key: 'selfConsumedKwh', label: 'Eigenverbrauch (kWh)' },
   { key: 'exportedKwh', label: 'Einspeisung brutto (kWh)' },
   { key: 'gridPurchaseKwh', label: 'Netzbezug (kWh)' },
+  { key: 'evChargingKwh', label: 'E-Auto: Ladestrom zuhause (kWh)' },
   { key: 'electricityPrice', label: 'Strompreis (CHF/kWh)' },
   { key: 'feedInTariff', label: 'EW Einspeisetarif (CHF/kWh)' },
   { key: 'neighborExportKwh', label: 'Solarsplit / Nachbar (kWh)' },
@@ -122,6 +124,7 @@ function buildYearlyData(rows) {
         grossExportedKwh: 0,
         neighborExportKwh: 0,
         gridPurchaseKwh: 0,
+        evChargingKwh: 0,
         gridPurchaseCost: 0,
         ownUseSavings: 0,
         feedInGrossRevenue: 0,
@@ -136,6 +139,7 @@ function buildYearlyData(rows) {
     const exported = toNumber(row.exportedKwh);
     const neighborExport = toNumber(row.neighborExportKwh);
     const grid = toNumber(row.gridPurchaseKwh);
+    const evCharging = toNumber(row.evChargingKwh);
     const elec = typeof row.electricityPrice === 'number' ? row.electricityPrice : 0;
     const tariff = typeof row.feedInTariff === 'number' ? row.feedInTariff : 0;
 
@@ -149,6 +153,7 @@ function buildYearlyData(rows) {
     target.grossExportedKwh += exported;
     target.neighborExportKwh += neighborExport;
     target.gridPurchaseKwh += grid;
+    target.evChargingKwh += evCharging;
     target.gridPurchaseCost += grid * elec;
     target.ownUseSavings += selfConsumed * elec;
     target.feedInGrossRevenue += exported * tariff;
@@ -186,6 +191,9 @@ function buildYearlyData(rows) {
       const neighborNetRevenue = neighborGrossRevenue - neighborServiceTotal;
       const pvConsumptionKwh = item.productionKwh - grossExportedKwh;
       const consumptionKwh = item.selfConsumedKwh + item.gridPurchaseKwh;
+      // EV ist bereits im gemessenen Hausverbrauch enthalten, also nicht addieren.
+      const evChargingKwh = Math.min(item.evChargingKwh, consumptionKwh);
+      const householdConsumptionKwh = Math.max(consumptionKwh - evChargingKwh, 0);
       const annualBenefit =
         item.ownUseSavings + feedInRevenue + neighborGrossRevenue - neighborServiceTotal;
       const netBalance = annualBenefit - item.gridPurchaseCost;
@@ -197,6 +205,8 @@ function buildYearlyData(rows) {
         exportedKwh,
         pvConsumptionKwh,
         consumptionKwh,
+        evChargingKwh,
+        householdConsumptionKwh,
         feedInRevenue,
         neighborGrossRevenue,
         neighborServiceFee,
@@ -276,6 +286,12 @@ function AdminModal({ open, onClose, monthlyData, onSave }) {
         return updated;
       });
 
+      const changed = nextData.find((row) => row.month === selectedMonth);
+      const ev = changed?.evChargingKwh;
+      const total = toNumber(changed?.selfConsumedKwh) + toNumber(changed?.gridPurchaseKwh);
+      if (ev != null && (ev < 0 || (total > 0 && ev > total))) {
+        throw new Error('E-Auto-Ladestrom darf nicht negativ oder höher als der Gesamtverbrauch sein.');
+      }
       await onSave({ password, data: nextData, selectedMonth });
       setStatus('Gespeichert. GitHub wurde aktualisiert.');
     } catch (error) {
@@ -344,6 +360,7 @@ function AdminModal({ open, onClose, monthlyData, onSave }) {
             ))}
           </div>
 
+          <p className="admin-hint">E-Auto: Nur zuhause geladene kWh eintragen (idealerweise am Ladepunkt gemessen). Dieser Wert ist bereits Teil des Eigenverbrauchs bzw. Netzbezugs und wird nur separat ausgewiesen. Leere Monate bleiben ohne E-Auto-Wert.</p>
           <div className="admin-actions">
             <div className="admin-status">{status}</div>
             <button className="save-button" type="submit" disabled={saving}>
@@ -390,6 +407,7 @@ export default function App() {
         acc.neighborExportKwh += row.neighborExportKwh;
         acc.exportedKwh += row.exportedKwh;
         acc.gridPurchaseKwh += row.gridPurchaseKwh;
+        acc.evChargingKwh += row.evChargingKwh;
         acc.gridPurchaseCost += row.gridPurchaseCost;
         acc.ownUseSavings += row.ownUseSavings;
         acc.feedInRevenue += row.feedInRevenue;
@@ -409,6 +427,7 @@ export default function App() {
         neighborExportKwh: 0,
         exportedKwh: 0,
         gridPurchaseKwh: 0,
+        evChargingKwh: 0,
         gridPurchaseCost: 0,
         ownUseSavings: 0,
         feedInRevenue: 0,
@@ -428,6 +447,7 @@ export default function App() {
       ...base,
       pvConsumptionKwh: base.productionKwh - base.grossExportedKwh,
       consumptionKwh,
+      householdConsumptionKwh: Math.max(consumptionKwh - base.evChargingKwh, 0),
       autarky: consumptionKwh > 0 ? base.selfConsumedKwh / consumptionKwh : null,
       selfConsumptionRate: base.productionKwh > 0 ? base.selfConsumedKwh / base.productionKwh : null,
       paybackYears: base.netBalance > 0 ? meta.netInvestment / base.netBalance : null,
@@ -482,7 +502,8 @@ export default function App() {
     year: String(row.year),
     Erzeugung: row.productionKwh,
     'PV Verbrauch': row.pvConsumptionKwh,
-    Gesamtverbrauch: row.consumptionKwh,
+    'Hausverbrauch (ohne E-Auto)': row.householdConsumptionKwh,
+    'E-Auto': row.evChargingKwh,
     Solarsplit: row.neighborExportKwh,
     'Einspeisung EW': row.exportedKwh,
     Netzbezug: row.gridPurchaseKwh,
@@ -626,6 +647,7 @@ export default function App() {
             <div className="section-head">
               <div>
                 <h2>Energieflüsse pro Jahr</h2>
+                <p>Hausverbrauch und E-Auto bilden zusammen den Gesamtverbrauch. E-Auto wird nicht zusätzlich gezählt.</p>
               </div>
             </div>
             <div className="chart-wrap large">
@@ -636,7 +658,8 @@ export default function App() {
                   <YAxis stroke="#64748b" />
                   <Tooltip content={<TooltipValue suffix=" kWh" />} />
                   <Legend />
-                  <Bar dataKey="Gesamtverbrauch" fill={COLORS.totalConsumption} radius={[8, 8, 0, 0]} />
+                  <Bar dataKey="Hausverbrauch (ohne E-Auto)" stackId="consumption" fill={COLORS.totalConsumption} />
+                  <Bar dataKey="E-Auto" stackId="consumption" fill={COLORS.ev} radius={[8, 8, 0, 0]} />
                   <Bar dataKey="Erzeugung" fill={COLORS.solar} radius={[8, 8, 0, 0]} />
                   <Bar dataKey="PV Verbrauch" fill={COLORS.ownUse} radius={[8, 8, 0, 0]} />
                   <Bar dataKey="Solarsplit" fill={COLORS.neighbor} radius={[8, 8, 0, 0]} />
@@ -767,6 +790,9 @@ export default function App() {
                   <th>Solarsplit</th>
                   <th>Einspeisung EW netto</th>
                   <th>Netzbezug</th>
+                  <th>Gesamtverbrauch</th>
+                  <th>Davon E-Auto</th>
+                  <th>Haus ohne E-Auto</th>
                   <th>Autarkie</th>
                   <th>Eigenverbrauchsquote</th>
                   <th>Ersparnis EV</th>
@@ -790,6 +816,9 @@ export default function App() {
                     <td>{number.format(row.neighborExportKwh)} kWh</td>
                     <td>{number.format(row.exportedKwh)} kWh</td>
                     <td>{number.format(row.gridPurchaseKwh)} kWh</td>
+                    <td>{number.format(row.consumptionKwh)} kWh</td>
+                    <td>{number.format(row.evChargingKwh)} kWh</td>
+                    <td>{number.format(row.householdConsumptionKwh)} kWh</td>
                     <td>{row.autarky == null ? '–' : percent.format(row.autarky)}</td>
                     <td>{row.selfConsumptionRate == null ? '–' : percent.format(row.selfConsumptionRate)}</td>
                     <td>{row.ownUseSavings > 0 ? currency.format(row.ownUseSavings) : '–'}</td>
@@ -820,6 +849,9 @@ export default function App() {
                   <td>{number.format(totals.neighborExportKwh)} kWh</td>
                   <td>{number.format(totals.exportedKwh)} kWh</td>
                   <td>{number.format(totals.gridPurchaseKwh)} kWh</td>
+                  <td>{number.format(totals.consumptionKwh)} kWh</td>
+                  <td>{number.format(totals.evChargingKwh)} kWh</td>
+                  <td>{number.format(totals.householdConsumptionKwh)} kWh</td>
                   <td>{totals.autarky == null ? '–' : percent.format(totals.autarky)}</td>
                   <td>{totals.selfConsumptionRate == null ? '–' : percent.format(totals.selfConsumptionRate)}</td>
                   <td>{totals.ownUseSavings > 0 ? currency.format(totals.ownUseSavings) : '–'}</td>
